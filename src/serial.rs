@@ -2,7 +2,7 @@ use phf::phf_map;
 
 // https://github.com/raspberrypi/usb-pid#assignment
 pub const PICO_USB_VID: u16 = 0x2E8A;
-pub const PICO_USB_PID_MAP: phf::Map<u16, PicoProduct<'static>> = phf_map! {
+pub static PICO_USB_PID_MAP: phf::Map<u16, PicoProduct<'static>> = phf_map! {
     // Internal
     0x0003u16 => PicoProduct { company: "Raspberry Pi", description: "Raspberry Pi RP2040 boot", link: "https://www.raspberrypi.org/documentation/pico/getting-started/" },
     0x0004u16 => PicoProduct { company: "Raspberry Pi", description: "Raspberry Pi PicoProbe", link: "https://github.com/raspberrypi/picoprobe/" },
