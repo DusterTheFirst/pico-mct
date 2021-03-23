@@ -1,0 +1,15 @@
+[package]
+name = "openmct-pico-pilot-source"
+version = "0.1.0"
+authors = ["Zachary Kohnen <14093962+DusterTheFirst@users.noreply.github.com>"]
+edition = "2018"
+
+[dependencies]
+log = "0.4"
+simplelog = "0.9"
+anyhow = "1.0"
+structopt = { version = "0.3", features = ["color"] }
+clap = "2.33"
+serialport = "4.0"
+phf = { version = "0.8.0", features = ["macros"] }
+dialoguer = "0.8"
