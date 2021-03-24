@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Open MCT</title>
+        <script src="./dependencies/openmct/openmct.js"></script>
+    </head>
+    <body>
+        <script>
+            openmct.setAssetPath("./dependencies/openmct/");
+            openmct.install(openmct.plugins.LocalStorage());
+            openmct.install(openmct.plugins.MyItems());
+            openmct.install(openmct.plugins.UTCTimeSystem());
+            openmct.time.clock('local', { start: -15 * 60 * 1000, end: 0 });
+            openmct.time.timeSystem('utc');
+            openmct.install(openmct.plugins.Espresso());
+
+            openmct.start();
+        </script>
+    </body>
+</html>

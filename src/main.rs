@@ -97,7 +97,7 @@ fn main() -> color_eyre::Result<()> {
     let mut serial_port = serialport::new(&serial_port, args.baud)
         .timeout(Duration::from_millis(1000)) // FIXME:
         .open()
-        .wrap_err_with(|| format!("Failed to open port {}", serial_port))?;
+        .wrap_err_with(|| format!("Failed to open port {}", serial_port))?; // TODO: HANDLE DISCONNECTS (reconnects)
 
     // let (mut serial_port_read, mut serial_port_write) = (
     //     BufReader::new(
