@@ -1,7 +1,9 @@
 {
     "cSpell.words": [
+        "MCT's",
         "dialoguer",
         "serialport",
         "simplelog"
-    ]
+    ],
+    "javascript.preferences.importModuleSpecifierEnding": "js"
 }
