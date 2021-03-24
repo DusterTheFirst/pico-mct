@@ -2,11 +2,12 @@
 <html>
     <head>
         <title>Open MCT</title>
-        <script src="./dependencies/openmct/openmct.js"></script>
+        <script src="./openmct/openmct.js"></script>
+        <link rel="shortcut icon" href="openmct/favicons/favicon-32x32.png" type="image/x-icon">
     </head>
     <body>
         <script>
-            openmct.setAssetPath("./dependencies/openmct/");
+            openmct.setAssetPath("./openmct/");
             openmct.install(openmct.plugins.LocalStorage());
             openmct.install(openmct.plugins.MyItems());
             openmct.install(openmct.plugins.UTCTimeSystem());
