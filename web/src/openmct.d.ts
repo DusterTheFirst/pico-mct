@@ -13,11 +13,6 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations
  * under the License.
- *
- * Open MCT includes source code licensed under additional open source
- * licenses. See the Open Source Licenses file (LICENSES.md) included with
- * this source code distribution or the Licensing information page available
- * at runtime from the About dialog for additional information.
  *****************************************************************************/
 
 declare const openmct: MCT;
@@ -375,7 +370,7 @@ declare module api {
      *        would be contained
      * @returns false if this composition should be disallowed
      */
-    type CompositionPolicy = (containingObject: DomainObject, containedObject: DomainObject) => boolean;
+    export type CompositionPolicy = (containingObject: DomainObject, containedObject: DomainObject) => boolean;
 
     /**
      * A CompositionCollection represents the list of domain objects contained
@@ -395,8 +390,8 @@ declare module api {
      * @param provider the provider to use to retrieve other domain objects
      * @param api the composition API, for policy checks
      */
-    class CompositionCollection {
-        constructor(domainObject: DomainObject, provider: CompositionnProvider, api: CompositionAPI);
+    export class CompositionCollection {
+        constructor(domainObject: DomainObject, provider: CompositionProvider, api: CompositionAPI);
 
         /**
          * Listen for changes to this composition.  Supports 'add', 'remove', and
@@ -462,6 +457,349 @@ declare module api {
         public reorder(oldIndex: number, newIndex: number): void;
 
         public cleanUpMutables(): void;
+    }
+
+    /**
+     * A CompositionProvider provides the underlying implementation of
+     * composition-related behavior for certain types of domain object.
+     *
+     * By default, a composition provider will not support composition
+     * modification.  You can add support for mutation of composition by
+     * defining `add` and/or `remove` methods.
+     *
+     * If the composition of an object can change over time-- perhaps via
+     * server updates or mutation via the add/remove methods, then one must
+     * trigger events as necessary.
+     */
+    export class CompositionProvider {
+        constructor(publicAPI: MCT, compositionAPI: CompositionAPI);
+
+        /**
+         * Check if this provider should be used to load composition for a
+         * particular domain object.
+         * @param domainObject the domain object to check
+         * @returns true if this provider can provide composition for a given
+         * domain object
+         */
+        public appliesTo(domainObject: DomainObject): boolean;
+
+        /**
+         * Load any domain objects contained in the composition of this domain
+         * object.
+         * @param domainObject the domain object for which to load composition
+         * @returns a promise for the Identifiers in this composition
+         */
+        public load(domainObject: DomainObject): Promise<Identifier[]>;
+
+        /**
+         * Attach listeners for changes to the composition of a given domain object.
+         * Supports `add` and `remove` events.
+         *
+         * @param domainObject to listen to
+         * @param event the event to bind to, either `add` or `remove`.
+         * @param callback callback to invoke when event is triggered.
+         * @param [context] context to use when invoking callback.
+         */
+        public on<T>(domainObject: DomainObject, event: "add" | "remove", callback: (context: T, event: any) => void, context?: T): void;
+
+        /**
+         * Remove a listener that was previously added for a given domain object.
+         * event name, callback, and context must be the same as when the listener
+         * was originally attached.
+         *
+         * @param domainObject to remove listener for
+         * @param event event to stop listening to: `add` or `remove`.
+         * @param callback callback to remove.
+         * @param [context] context of callback to remove.
+         */
+        public off<T>(domainObject: DomainObject, event: "add" | "remove", callback: (context: T, event: any) => void, context?: T): void;
+
+        /**
+         * Remove a domain object from another domain object's composition.
+         *
+         * This method is optional; if not present, adding to a domain object's
+         * composition using this provider will be disallowed.
+         *
+         * @param domainObject the domain object which should have its composition modified
+         * @param child the domain object to remove
+         */
+        public remove(domainObject: DomainObject, child: DomainObject): void;
+
+        /**
+         * Add a domain object to another domain object's composition.
+         *
+         * This method is optional; if not present, adding to a domain object's
+         * composition using this provider will be disallowed.
+         *
+         * @param domainObject the domain object which should have its composition modified
+         * @param child the domain object to add
+         */
+        public add(domainObject: DomainObject, child: DomainObject): void;
+
+        public reorder(domainObject: DomainObject, oldIndex: number, newIndex: number): void;
+    }
+    //#endregion
+
+    //#region ObjectAPI
+    /**
+     * Utilities for loading, saving, and manipulating domain objects.
+     * @interface ObjectAPI
+     * @memberof module:openmct
+     */
+    export class ObjectAPI {
+        /**
+         * Get the root-level object.
+         * @returns a promise for the root object
+         */
+        public getRoot(): Promise<DomainObject>;
+
+        /**
+         * Register a new object provider for a particular namespace.
+         *
+         * @param namespace the namespace for which to provide objects
+         * @param provider the provider which will handle loading domain objects
+         * from this namespace
+         */
+        public addProvider(namespace: string, provider: Partial<ObjectProvider>): void;
+
+        /**
+         * Get a domain object.
+         *
+         * @param key the key for the domain object to load
+         * @param abortSignal (optional) signal to abort fetch requests
+         * @returns a promise which will resolve when the domain object
+         *          has been saved, or be rejected if it cannot be saved
+         */
+        public get(key: string, abortSignal: AbortSignal): Promise<void>;
+
+        /**
+         * Search for domain objects.
+         *
+         * Object providersSearches and combines results of each object provider search.
+         * Objects without search provided will have been indexed
+         * and will be searched using the fallback indexed search.
+         * Search results are asynchronous and resolve in parallel.
+         *
+         * @param query the term to search for
+         * @param abortSignal (optional) signal to cancel downstream fetch requests
+         * @returns an array of promises returned from each object provider's search function
+         *          each resolving to domain objects matching provided search query and options.
+         */
+        public search(query: string, abortSignal: AbortSignal): Array<Promise<DomainObject>>;
+
+        /**
+         * Will fetch object for the given identifier, returning a version of the object that will automatically keep
+         * itself updated as it is mutated. Before using this function, you should ask yourself whether you really need it.
+         * The platform will provide mutable objects to views automatically if the underlying object can be mutated. The
+         * platform will manage the lifecycle of any mutable objects that it provides. If you use `getMutable` you are
+         * committing to managing that lifecycle yourself. `.destroy` should be called when the object is no longer needed.
+         *
+         * @returns a promise that will resolve with a MutableDomainObject if
+         * the object can be mutated.
+         */
+        public getMutable(identifier: string): Promise<MutableDomainObject>;
+
+        /**
+         * This function is for cleaning up a mutable domain object when you're done with it.
+         * You only need to use this if you retrieved the object using `getMutable()`. If the object was provided by the
+         * platform (eg. passed into a `view()` function) then the platform is responsible for its lifecycle.
+         */
+        public destroyMutable(domainObject: MutableDomainObject): void;
+
+        public delete(): void;
+
+        public isPersistable(idOrKeyString: string): boolean;
+
+        /**
+         * Add a root-level object.
+         * @param key an array of identifiers for root level objects, or a function
+         * that returns a promise for an identifier or an array of root level objects.
+         */
+        public addRoot(key: Identifier[] | (() => Promise<Identifier[]>)): void;
+
+        /**
+         * Register an object interceptor that transforms a domain object requested via module:openmct.ObjectAPI.get
+         * The domain object will be transformed after it is retrieved from the persistence store
+         * The domain object will be transformed only if the interceptor is applicable to that domain object as defined by the InterceptorDef
+         *
+         * @param interceptorDef the interceptor definition to add
+         */
+        public addGetInterceptor(interceptorDef: InterceptorDef): void;
+
+        /**
+         * Modify a domain object.
+         * @param object the object to mutate
+         * @param path the property to modify
+         * @param value the new value for this property
+         */
+        public mutate<T>(domainObject: DomainObject, path: string, value: T): void;
+
+        /**
+         * @param identifier An object identifier
+         * @returns true if the object can be mutated, otherwise returns false
+         */
+        public supportsMutation(identifier: Identifier): boolean;
+
+        /**
+         * Observe changes to a domain object.
+         * @param domainObject the object to observe
+         * @param path the property to observe
+         * @param callback a callback to invoke when new values for
+         *        this property are observed
+         */
+        public observe(domainObject: DomainObject, path: string, callback: (domainObject: DomainObject) => void): void;
+
+        /**
+         * @returns A string representation of the given identifier, including namespace and key
+         */
+        public makeKeyString(identifier: Identifier): string;
+
+        /**
+         * @param keyString A string representation of the given identifier, that is, a namespace and key separated by a colon.
+         * @returns An identifier object
+         */
+        public parseKeyString(keyString: string): Identifier;
+
+        /**
+         * Given any number of identifiers, will return true if they are all equal, otherwise false.
+         */
+        public areIdsEqual(...identifiers: Identifier[]): boolean;
+
+        public getOriginalPath(identifier: Identifier, path?: DomainObject[]): DomainObject[];
+    }
+
+    /**
+     * Provides the ability to read, write, and delete domain objects.
+     *
+     * When registering a new object provider, all methods on this interface
+     * are optional.
+     */
+    export interface ObjectProvider {
+        /**
+         * Create the given domain object in the corresponding persistence store
+         * 
+         * @param domainObject the domain object to create
+         * @returns a promise which will resolve when the domain object
+         *          has been created, or be rejected if it cannot be saved
+         */
+        create(domainObject: DomainObject): Promise<void>;
+
+        /**
+         * Update this domain object in its persistence store
+         *
+         * @param domainObject the domain object to update
+         * @returns  a promise which will resolve when the domain object
+         *          has been updated, or be rejected if it cannot be saved
+         */
+        update(domainObject: DomainObject): Promise<void>;
+
+        /**
+         * Delete this domain object.
+         *
+         * @param domainObject the domain object to delete
+         * @returns  a promise which will resolve when the domain object
+         *          has been deleted, or be rejected if it cannot be deleted
+         */
+        delete(domainObject: DomainObject): Promise<void>;
+    }
+
+    /**
+     * Uniquely identifies a domain object.
+     */
+    export interface Identifier {
+        /** the namespace to/from which this domain object should be loaded/stored. */
+        namespace: string,
+        /** a unique identifier for the domain object within that namespace */
+        key: string;
+    }
+
+    /**
+     * A domain object is an entity of relevance to a user's workflow, that
+     * should appear as a distinct and meaningful object within the user
+     * interface. Examples of domain objects are folders, telemetry sensors,
+     * and so forth.
+     *
+     * A few common properties are defined for domain objects. Beyond these,
+     * individual types of domain objects may add more as they see fit.
+     */
+    export interface DomainObject {
+        /** a key/namespace pair which uniquely identifies this domain object */
+        identifier: Identifier,
+        /** the type of domain object */
+        type: string,
+        /** the human-readable name for this domain object */
+        name: string,
+        /** the user name of the creator of this domain object */
+        creator?: string,
+        /**
+         * the time, in milliseconds since the UNIX epoch, at which this domain
+         * object was last modified
+         */
+        modified?: number,
+        /**
+         * if present, this will be used by the default composition provider to
+         * load domain objects
+         */
+        composition?: Identifier[]
+    }
+
+    /**
+     * Wraps a domain object to keep its model synchronized with other instances of the same object.
+     *
+     * Creating a MutableDomainObject will automatically register listeners to keep its model in sync. As such, developers
+     * should be careful to destroy MutableDomainObject in order to avoid memory leaks.
+     *
+     * All Open MCT API functions that provide objects will provide MutableDomainObjects where possible, except
+     * `openmct.objects.get()`, and will manage that object's lifecycle for you. Calling `openmct.objects.getMutable()`
+     * will result in the creation of a new MutableDomainObject and you will be responsible for destroying it
+     * (via openmct.objects.destroy) when you're done with it.
+     */
+    export class MutableDomainObject implements DomainObject {
+        public identifier: Identifier;
+        public type: string;
+        public name: string;
+        public creator?: string | undefined;
+        public modified?: number | undefined;
+        public composition?: Identifier[] | undefined;
+        
+        public static createMutable(object: DomainObject, mutationTopic: string): MutableDomainObject;
+        public static mutateObject<T>(object: DomainObject, path: string, value: T): void;
+
+        public $observe(path: string, callback: Function): Function;
+        public $set<T>(path: string, value: T): void;
+    
+        public $refresh(model: string): void;
+    
+        public $on(event: string, callback: Function): Function;
+        public $destroy(): void;
+    }
+
+    /**
+     * A InterceptorRegistry maintains the definitions for different interceptors that may be invoked on domain objects.
+     */
+    export class InterceptorRegistry {
+        /**
+         * Register a new object interceptor.
+         *
+         * @param interceptorDef the interceptor to add
+         */
+        public addInterceptor(interceptorDef: InterceptorDef): void;
+
+        /**
+         * Retrieve all interceptors applicable to a domain object.
+         * 
+         * @returns the registered interceptors for this identifier/object
+         */
+        public getInterceptors(identifier: Identifier, object: Object): InterceptorDef;
+    }
+
+    export interface InterceptorDef {
+        /** function that determines if this interceptor should be called for the given identifier/object */
+        appliesTo(domainObject: DomainObject): boolean;
+        /** function that transforms the provided domain object and returns the transformed domain object */
+        invoke(domainObject: DomainObject): DomainObject;
+        /** the priority for this interceptor. A higher number returned has more weight than a lower number */
+        priority(domainObject: DomainObject): number;
     }
     //#endregion
 }
