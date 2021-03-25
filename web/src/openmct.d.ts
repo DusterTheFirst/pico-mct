@@ -1,5 +1,5 @@
 /*****************************************************************************
- * Open MCT, Copyright (c) 2014-2018, United States Government
+ * Open MCT, Copyright (c) 2014-2020, United States Government
  * as represented by the Administrator of the National Aeronautics and Space
  * Administration. All rights reserved.
  *
@@ -328,7 +328,142 @@ declare module api {
     }
     //#endregion
 
-    
+    //#region CompositionAPI
+    export class CompositionAPI {
+        /**
+         * An interface for interacting with the composition of domain objects.
+         * The composition of a domain object is the list of other domain objects
+         * it "contains" (for instance, that should be displayed beneath it
+         * in the tree.)
+         */
+        constructor(openmct: MCT);
+
+        /**
+         * Add a composition provider.
+         *
+         * Plugins can add new composition providers to change the loading
+         * behavior for certain domain objects.
+         *
+         * @param provider the provider to add
+         */
+        public addProvider(provider: CompositionProvider): void;
+
+        /**
+         * Retrieve the composition (if any) of this domain object.
+         */
+        public get(domainObject: DomainObject): CompositionCollection;
+
+
+        /**
+         * Add a composition policy. Composition policies may disallow domain
+         * objects from containing other domain objects.
+         */
+        public addPolicy(policy: CompositionPolicy): void;
+    }
+
+    /**
+     * A composition policy is a function which either allows or disallows
+     * placing one object in another's composition.
+     *
+     * Open MCT's policy model requires consensus, so any one policy may
+     * reject composition by returning false. As such, policies should
+     * generally be written to return true in the default case.
+     *
+     * @param containingObject the object which
+     *        would act as a container
+     * @param containedObject the object which
+     *        would be contained
+     * @returns false if this composition should be disallowed
+     */
+    type CompositionPolicy = (containingObject: DomainObject, containedObject: DomainObject) => boolean;
+
+    /**
+     * A CompositionCollection represents the list of domain objects contained
+     * by another domain object. It provides methods for loading this
+     * list asynchronously, modifying this list, and listening for changes to
+     * this list.
+     *
+     * Usage:
+     * ```javascript
+     *  var myViewComposition = MCT.composition.get(myViewObject);
+     *  myViewComposition.on('add', addObjectToView);
+     *  myViewComposition.on('remove', removeObjectFromView);
+     *  myViewComposition.load(); // will trigger `add` for all loaded objects.
+     *  ```
+     *
+     * @param domainObject the domain object whose composition will be contained
+     * @param provider the provider to use to retrieve other domain objects
+     * @param api the composition API, for policy checks
+     */
+    class CompositionCollection {
+        constructor(domainObject: DomainObject, provider: CompositionnProvider, api: CompositionAPI);
+
+        /**
+         * Listen for changes to this composition.  Supports 'add', 'remove', and
+         * 'load' events.
+         *
+         * @param event event to listen for, either 'add', 'remove' or 'load'.
+         * @param callback to trigger when event occurs.
+         * @param [context] context to use when invoking callback, optional.
+         */
+        public on<T>(event: "add" | "remove" | "reorder", callback: (context: T) => void, context?: T): void;
+
+        /**
+         * Remove a listener.  Must be called with same exact parameters as
+         * `on`.
+         *
+         * @param event
+         * @param callback
+         * @param [context]
+         */
+        public off<T>(event: "add" | "remove" | "reorder", callback: (context: T) => void, context?: T): void;
+
+        /**
+         * Add a domain object to this composition.
+         *
+         * A call to [load]{@link module:openmct.CompositionCollection#load}
+         * must have resolved before using this method.
+         *
+         * @param child the domain object to add
+         * @param skipMutate true if the underlying provider should
+         *        not be updated
+         */
+        public add(child: DomainObject, skipMutate: boolean): void;
+
+        /**
+         * Load the domain objects in this composition.
+         *
+         * @returns  a promise for
+         *          the domain objects in this composition
+         */
+        public load(): Promise<DomainObject[]>;
+
+        /**
+         * Remove a domain object from this composition.
+         *
+         * A call to [load]{@link module:openmct.CompositionCollection#load}
+         * must have resolved before using this method.
+         *
+         * @param child the domain object to remove
+         * @param skipMutate true if the underlying provider should
+         *        not be updated
+         */
+        public remove(child: DomainObject, skipMutate: boolean): void;
+
+        /**
+         * Reorder the domain objects in this composition.
+         *
+         * A call to [load]{@link module:openmct.CompositionCollection#load}
+         * must have resolved before using this method.
+         *
+         * @param oldIndex
+         * @param newIndex
+         */
+        public reorder(oldIndex: number, newIndex: number): void;
+
+        public cleanUpMutables(): void;
+    }
+    //#endregion
 }
 
 declare module plugins {
