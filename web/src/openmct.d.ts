@@ -761,15 +761,15 @@ declare module api {
         public creator?: string | undefined;
         public modified?: number | undefined;
         public composition?: Identifier[] | undefined;
-        
+
         public static createMutable(object: DomainObject, mutationTopic: string): MutableDomainObject;
         public static mutateObject<T>(object: DomainObject, path: string, value: T): void;
 
         public $observe(path: string, callback: Function): Function;
         public $set<T>(path: string, value: T): void;
-    
+
         public $refresh(model: string): void;
-    
+
         public $on(event: string, callback: Function): Function;
         public $destroy(): void;
     }
@@ -802,7 +802,393 @@ declare module api {
         priority(domainObject: DomainObject): number;
     }
     //#endregion
+
+    //#region TypeAPI
+    export interface TypeDefinition {
+        /** the name for this type of object */
+        label: string,
+        /** a longer-form description of this type */
+        description: string,
+        /** a function which initializes the model for new domain objects of this type */
+        initialize?: (object: DomainObject) => void,
+        /** true if users should be allowed to create this type (default: false) */
+        creatable?: boolean,
+        /** the CSS class to apply for icons */
+        cssClass?: string,
+    }
+
+    /**
+     * A TypeRegistry maintains the definitions for different types
+     * that domain objects may have.
+     */
+    export class TypeRegistry {
+        /**
+         * Register a new object type.
+         *
+         * @param typeKey a string identifier for this type
+         * @param type the type to add
+         */
+        public addType(typeKey: string, type: Type): void;
+
+        /**
+         * List keys for all registered types.
+         * 
+         * @returns all registered type keys
+         */
+        public listKeys(): string[];
+
+        /**
+         * Retrieve a registered type by its key.
+         * 
+         * @param typeKey the key for this type
+         * @returns the registered type
+         */
+        public get(typeKey: string): Type;
+
+        public importLegacyTypes(types: any): void;
+    }
+
+    /**
+     * A Type describes a kind of domain object that may appear or be
+     * created within Open MCT.
+     */
+    export class Type {
+        constructor(definition: TypeDefinition);
+
+        /**
+         * Check if a domain object is an instance of this type.
+         * 
+         * @returns true if the domain object is of this type
+         */
+        public check(domainObject: DomainObject): boolean;
+
+        /**
+        * Create a type definition from a legacy definition.
+        */
+        public definitionFromLegacyDefinition(legacyDefinition: { name: string, cssClass: string, description: string, properties: string, model: any }): TypeDefinition;
+    }
+    //#endregion
+
+    //#region TelemetryAPI
+    export type ValueMetadata = object; // TODO: bruh what, generics would be so pog, also no docs on this?
+
+    /**
+     * A LimitEvaluator may be used to detect when telemetry values
+     * have exceeded nominal conditions.
+     *
+     * @interface LimitEvaluator
+     * @memberof module:openmct.TelemetryAPI~
+     */
+    export interface LimitEvaluator {
+        /**
+         * Check for any limit violations associated with a telemetry datum.
+         * @param datum the telemetry datum to evaluate
+         * @param property the property to check for limit violations
+         * @returns metadata about the limit violation, or undefined if a value is within limits
+         */
+        evaluate<T>(datum: T, property: TelemetryProperty): LimitViolation;
+    }
+
+    /** A violation of limits defined for a telemetry property. */
+    export interface LimitViolation {
+        /**
+         * the class (or space-separated classes) to apply to display elements
+         * for values which violate this limit
+         */
+        cssClass: string;
+        /** the human-readable name for the limit violation */
+        name: string;
+    }
+
+    /**
+     * A TelemetryFormatter converts telemetry values for purposes of
+     * display as text.
+     */
+    export interface TelemetryFormatter {
+        /**
+         * Retrieve the 'key' from the datum and format it accordingly to
+         * telemetry metadata in domain object.
+         */
+        format(key: string): string;
+    }
+
+    /**
+     * Describes a property which would be found in a datum of telemetry
+     * associated with a particular domain object.
+     */
+    export interface TelemetryProperty {
+        /** the name of the property in the datum which contains this telemetry value */
+        key: string,
+        /** the human-readable name for this property */
+        name: string,
+        /** the units associated with this property */
+        units?: string,
+        /** true if this property is a timestamp, or may be otherwise used to order
+         * telemetry in a time-like fashion; default is false
+         */
+        temporal?: boolean,
+        /** true if the values for this property  can be interpreted plainly as numbers; default is true */
+        numeric?: boolean,
+        /** true if this property may have only certain specific values; default is false */
+        enumerated?: boolean,
+        /** for enumerated states, an ordered list of possible values */
+        values?: string[]
+    }
+
+    /**
+     * Describes and bounds requests for telemetry data.
+     */
+    export interface TelemetryRequest {
+        /**
+         * the key of the property to sort by. This may be prefixed with a "+" or
+         * a "-" sign to sort in ascending or descending order respectively. If
+         * no prefix is present, ascending order will be used.
+         */
+        sort: string,
+        /** the lower bound for values of the sorting property */
+        start: any,
+        /** the upper bound for values of the sorting property */
+        end: any,
+        /**
+         * symbolic identifiers for strategies (such as `minmax`) which may be recognized
+         * by providers; these will be tried in order until an appropriate provider is found
+         */
+        strategies: string[];
+    }
+
+    /**
+     * Provides telemetry data. To connect to new data sources, new
+     * TelemetryProvider implementations should be
+     * [registered]{@link module:openmct.TelemetryAPI#addProvider}.
+     */
+    export interface TelemetryProvider<T> {
+        /**
+         * Request historical telemetry for a domain object.
+         * The `options` argument allows you to specify filters
+         * (start, end, etc.), sort order, and strategies for retrieving
+         * telemetry (aggregation, latest available, etc.).
+         *
+         * @param domainObject the object which has associated telemetry
+         * @param options options for this historical request
+         * @returns a promise for an array of telemetry data
+         */
+        request(domainObject: DomainObject, options: TelemetryRequest): Promise<T[]>;
+
+        /**
+         * Subscribe to realtime telemetry for a specific domain object.
+         * The callback will be called whenever data is received from a
+         * realtime provider.
+         *
+         * @param domainObject the object which has associated telemetry
+         * @param callback the callback to invoke with new data, as it becomes available
+         * @returns a function which may be called to terminate the subscription
+         */
+        subscribe(domainObject: DomainObject, callback: (newData: T) => void): () => void;
+
+        /**
+         * Get a limit evaluator for this domain object.
+         * Limit Evaluators help you evaluate limit and alarm status of individual
+         * telemetry datums for display purposes without having to interact directly
+         * with the Limit API.
+         *
+         * This method is optional.
+         * If a provider does not implement this method, it is presumed
+         * that no limits are defined for this domain object's telemetry.
+         *
+         * @param domainObject the domain object for which to evaluate limits
+         */
+        limitEvaluator?(domainObject: DomainObject): LimitEvaluator;
+
+        /**
+         * Get a limit evaluator for this domain object.
+         * Limit Evaluators help you evaluate limit and alarm status of individual
+         * telemetry datums for display purposes without having to interact directly
+         * with the Limit API.
+         *
+         * This method is optional.
+         * If a provider does not implement this method, it is presumed
+         * that no limits are defined for this domain object's telemetry.
+         *
+         * @param domainObject the domain object for which to evaluate limits
+         */
+        getLimitEvaluator?(domainObject: DomainObject): LimitEvaluator;
+    }
+
+    /**
+     * An interface for retrieving telemetry data associated with a domain
+     * object.
+     */
+    export class TelemetryAPI {
+        constructor(provider: TelemetryProvider<unknown>);
+
+        /**
+         * Return Custom String Formatter
+         *
+         * @param valueMetadata valueMetadata for given telemetry object
+         * @param format custom formatter string (eg: %.4f, &lts etc.)
+         */
+        public customStringFormatter<T>(valueMetadata: T, format: string): FormatService;
+
+        /**
+         * Return true if the given domainObject is a telemetry object.  A telemetry
+         * object is any object which has telemetry metadata-- regardless of whether
+         * the telemetry object has an available telemetry provider.
+         *
+         * @returns true if the object is a telemetry object.
+         */
+        public isTelemetryObject(domainObject: DomainObject): boolean;
+
+        /**
+         * Register a telemetry provider with the telemetry service. This
+         * allows you to connect alternative telemetry sources.
+         * 
+         * @param provider the new telemetry provider
+         */
+        public addProvider<T>(provider: TelemetryProvider<T>): void;
+
+        /**
+         * Get telemetry metadata for a given domain object.  Returns a telemetry
+         * metadata manager which provides methods for interrogating telemetry
+         * metadata.
+         */
+        public getMetadata(domainObject: DomainObject): TelemetryMetadataManager;
+
+        /**
+         * Return an array of value Metadata that are common to all supplied
+         * telemetry objects and match the requested hints.
+         */
+        public commonValuesForHints(metadata: any[], hints: string): ValueMetadata[];
+
+        /**
+         * Get a value formatter for a given valueMetadata.
+         */
+        public getValueFormatter(valueMetadata: ValueMetadata): TelemetryValueFormatter;
+
+        /** Get a value formatter for a given key. */
+        public getFormatter(key: String): Format;
+
+        /**
+         * Get a format map of all value formatters for a given piece of telemetry
+         * metadata.
+         */
+        public getFormatMap(metadata: object): { [key: string]: TelemetryValueFormatter };
+
+        /**
+         * Register a new telemetry data formatter.
+         */
+        public addFormat(format: Format): void;
+    }
+
+    /**
+     * Utility class for handling and inspecting telemetry metadata.  Applies
+     * reasonable defaults to simplify the task of providing metadata, while
+     * also providing methods for interrogating telemetry metadata.
+     */
+    export class TelemetryMetadataManager {
+        constructor(metadata: object);
+
+        /**
+         * Get value metadata for a single key.
+         */
+        public value(key: string): ValueMetadata;
+
+        /**
+        * Returns all value metadata, sorted by priority.
+        */
+        public values(): ValueMetadata[];
+
+        /**
+         * Get an array of valueMetadata that posses all hints requested.
+         * Array is sorted based on hint priority.
+         */
+        public valuesForHints(hints: string[]): ValueMetadata[]
+
+        public getFilterableValues(): ValueMetadata[];
+
+        public getDefaultDisplayValue(): string;
+    }
+
+    export class TelemetryValueFormatter {
+        constructor(valueMetadata: ValueMetadata, formatService: FormatService);
+        public parse(datum: object): number;
+        public format(datum: object): string;
+    }
+    //#endregion
+
+    
 }
+
+//#region FormatProvider
+/**
+ * An object used to convert between numeric values and text values,
+ * typically used to display these values to the user and to convert
+ * user input to a numeric format, particularly for time formats.
+ */
+declare interface Format {
+    /**
+     * Parse text (typically user input) to a numeric value.
+     * Behavior is undefined when the text cannot be parsed;
+     * `validate` should be called first if the text may be invalid.
+     *
+     * @param text the text to parse
+     * @returns the parsed numeric value
+     */
+    parse(text: string): number;
+
+    /** A unique identifier for this formatter. */
+    key: string;
+
+    /**
+     * Determine whether or not some text (typically user input) can
+     * be parsed to a numeric value by this format.
+     * 
+     * @param text the text to parse
+     * @returns true if the text can be parsed
+     */
+    validate(text: string): boolean;
+
+    /**
+     * Convert a numeric value to a text value for display using
+     * this format.
+     * 
+     * @param value the numeric value to format
+     * @param [minValue] Contextual information for scaled formatting used in linear scales such as conductor
+     * and plot axes. Specifies the smallest number on the scale.
+     * @param [maxValue] Contextual information for scaled formatting used in linear scales such as conductor
+     * and plot axes. Specifies the largest number on the scale
+     * @param [count] Contextual information for scaled formatting used in linear scales such as conductor
+     * and plot axes. The number of labels on the scale.
+     * @returns the text representation of the value
+     */
+    format(value: number, minValue?: number, maxValue?: number, count?: number): string;
+}
+
+/**
+ * Provides access to `Format` objects which can be used to
+ * convert values between human-readable text and numeric
+ * representations.
+ */
+declare interface FormatService {
+    /**
+     * Look up a format by its symbolic identifier.
+     * 
+     * @param key the identifier for this format
+     * @returns the format
+     * @throws {Error} errors when the requested format is unrecognized
+     */
+    getFormat(key: string): Format;
+}
+
+/**
+ * Provides formats from the `formats` extension category.
+ * 
+ * @param format constructors, from the `formats` extension category.
+ */
+declare class FormatProvider implements FormatService {
+    constructor(format: new () => Format);
+    getFormat(key: string): Format;
+}
+//#endregion
 
 declare module plugins {
     function UTCTimeSystem(): OpenMCTPlugin;
