@@ -1,15 +1,9 @@
-use std::{
-    io::{self, BufReader, BufWriter},
-    iter,
-    time::Duration,
-};
+use std::{io, thread, time::Duration};
 
 use clap::AppSettings::ColoredHelp;
-use color_eyre::{eyre::Context, Help};
-use dialoguer::{theme::ColorfulTheme, Select};
+use color_eyre::eyre::Context;
 use log::{debug, error, info, trace, warn, LevelFilter, SetLoggerError};
-use serial::{PICO_USB_PID_MAP, PICO_USB_VID};
-use serialport::SerialPortType;
+use serial::select_serial_port_prompt;
 use simplelog::{CombinedLogger, ConfigBuilder, TermLogger, TerminalMode};
 use structopt::StructOpt;
 
@@ -29,7 +23,7 @@ struct CommandLineArguments {
     pub baud: u32,
     /// Automatically reconnect if the port disconnects
     #[structopt(short, long)]
-    pub reconnect: bool,
+    pub reconnect: bool, // TODO: implement
 }
 
 fn main() -> color_eyre::Result<()> {
@@ -42,90 +36,99 @@ fn main() -> color_eyre::Result<()> {
     let serial_port = if let Some(port) = args.port {
         port
     } else {
-        println!("No serial port provided, select one from below");
+        info!("No serial port provided, select one from below");
 
-        loop {
-            let serial_ports = serialport::available_ports()
-                .wrap_err("Failed to get a listing of the serial ports")?
-                .into_iter()
-                .filter_map(|port| match port.port_type {
-                    SerialPortType::UsbPort(info) => {
-                        if info.vid == PICO_USB_VID {
-                            Some((port.port_name, PICO_USB_PID_MAP.get(&info.pid), info))
-                        } else {
-                            None
-                        }
-                    }
-                    _ => None,
-                })
-                .collect::<Vec<_>>();
+        if let Some(port) = select_serial_port_prompt()? {
+            trace!("User selected item: {:?}", port);
 
-            let serial_port_selection = serial_ports
-                .iter()
-                .map(|(name, product, info)| {
-                    if let Some(product) = product {
-                        return format!("{} | {} <{}>", name, product.description, product.link);
-                    } else {
-                        return format!("{} | Unknown PID ({})", name, info.pid);
-                    }
-                })
-                .chain(iter::once("Refresh".into()))
-                .collect::<Vec<_>>();
+            port.name
+        } else {
+            warn!("User did not select any port");
 
-            let selection = Select::with_theme(&ColorfulTheme::default())
-                .items(&serial_port_selection)
-                .default(0)
-                .interact_opt()
-                .wrap_err("Failed to get valid user input")?;
-
-            match selection {
-                Some(index) if index < serial_ports.len() => {
-                    println!("User selected item: {:?}", serial_ports[index]);
-
-                    break serial_ports[index].0.clone();
-                }
-                Some(_) => continue,
-                None => {
-                    println!("User did not select any port");
-
-                    return Ok(());
-                }
-            }
+            return Ok(());
         }
     };
 
-    let mut serial_port = serialport::new(&serial_port, args.baud)
-        .timeout(Duration::from_millis(1000)) // FIXME:
-        .open()
-        .wrap_err_with(|| format!("Failed to open port {}", serial_port))?; // TODO: HANDLE DISCONNECTS (reconnects)
+    let mut is_reconnecting = false;
 
-    // let (mut serial_port_read, mut serial_port_write) = (
-    //     BufReader::new(
-    //         serial_port
-    //             .try_clone()
-    //             .wrap_err("Failed to clone the open serial port")?,
-    //     ),
-    //     BufWriter::new(serial_port),
-    // );
+    loop {
+        let mut serial_port = match serialport::new(&serial_port, args.baud)
+            .timeout(Duration::from_millis(1000)) // FIXME: better timeout?
+            .open()
+        {
+            Ok(serial_port) => serial_port,
+            Err(e) => match e.kind() {
+                serialport::ErrorKind::Io(io::ErrorKind::NotFound) => {
+                    if is_reconnecting {
+                        warn!("Serial port does not exist..."); // FIXME: better way to busy wait for the thing to exist (https://github.com/notify-rs/notify)
 
-    io::copy(&mut serial_port, &mut io::stdout().lock())
-        .context("Failed to write from the serial port to stdout")?;
+                        thread::sleep(Duration::from_millis(1000));
 
-    Ok(())
+                        continue;
+                    } else {
+                        error!("Serial port does not exist. Was it closed?");
+                        warn!("This can happen if the serial port was closed but the port list was not refreshed.");
+
+                        return Ok(());
+                    }
+                }
+                _ => Err(e).wrap_err_with(|| format!("Failed to open port {}", serial_port))?,
+            },
+        }; // TODO: HANDLE DISCONNECTS (reconnects)
+
+        is_reconnecting = false;
+
+        // let (mut serial_port_read, mut serial_port_write) = (
+        //     BufReader::new(
+        //         serial_port
+        //             .try_clone()
+        //             .wrap_err("Failed to clone the open serial port")?,
+        //     ),
+        //     BufWriter::new(serial_port),
+        // );
+
+        match io::copy(&mut serial_port, &mut io::stdout().lock()) {
+            Ok(bytes_copies) => info!("Transferred {} bytes", bytes_copies),
+            Err(e) => match e.kind() {
+                io::ErrorKind::TimedOut => {
+                    error!("Failed to connect to the serial port");
+
+                    return Ok(());
+                }
+                io::ErrorKind::BrokenPipe => {
+                    if args.reconnect {
+                        warn!("Serial port disconnected!");
+
+                        thread::sleep(Duration::from_millis(1000));
+
+                        info!("Attempting to reconnect...");
+
+                        is_reconnecting = true;
+
+                        continue;
+                    } else {
+                        error!("Serial port disconnected!");
+
+                        return Ok(());
+                    }
+                }
+                _ => Err(e).context("Failed to write from the serial port to stdout")?,
+            },
+        };
+    }
 }
 
 fn setup_logger(verbose: usize) -> Result<(), SetLoggerError> {
     let application_verbosity = match verbose {
-        0 => LevelFilter::Warn,
-        1 => LevelFilter::Info,
-        2 => LevelFilter::Debug,
+        0 => LevelFilter::Info,
+        1 => LevelFilter::Debug,
         _ => LevelFilter::Trace,
     };
 
     let library_verbosity = match verbose {
-        0..=3 => LevelFilter::Warn,
-        4 => LevelFilter::Info,
-        5 => LevelFilter::Debug,
+        0..=2 => LevelFilter::Warn,
+        3 => LevelFilter::Info,
+        4 => LevelFilter::Debug,
         _ => LevelFilter::Trace,
     };
 
@@ -146,7 +149,7 @@ fn setup_logger(verbose: usize) -> Result<(), SetLoggerError> {
         ),
     ])?;
 
-    info!(
+    debug!(
         "using application verbosity: {} | using library verbosity: {}",
         application_verbosity, library_verbosity
     );
