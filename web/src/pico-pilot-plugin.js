@@ -22,6 +22,7 @@ export function PicoPilotPlugin() {
     }
 }
 
+/** @type {Partial<ObjectProvider>} */
 const objectProvider = {
     get: async (identifier) => {
         if (identifier.key === "avionics") {
@@ -43,6 +44,7 @@ const objectProvider = {
     }
 };
 
+/** @type {CompositionProvider} */
 const compositionProvider = {
     appliesTo: (object) => {
         return object.identifier.namespace === namespace && object.type === "folder";
@@ -50,7 +52,7 @@ const compositionProvider = {
     load: async () => {
         return [{
             namespace,
-            key: 1
+            key: "1"
         }]
     }
 };

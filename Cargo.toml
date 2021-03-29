@@ -13,4 +13,3 @@ serialport = "4.0"
 phf = { version = "0.8.0", features = ["macros"] }
 dialoguer = "0.8"
 color-eyre = "0.5"
-notify = "4.0"

@@ -191,7 +191,7 @@ declare class TimeAPI {
      * 
      * @returns The currently applied time system
      */
-    public timeSystem(timeSystemOrKey: TimeSystem | string, bounds: TimeBounds): TimeSystem;
+    public timeSystem(timeSystemOrKey: TimeSystem | string, bounds?: TimeBounds): TimeSystem;
 
     /**
      * Get or set the Time of Interest. The Time of Interest is a single point
@@ -471,7 +471,7 @@ declare class CompositionCollection {
  * server updates or mutation via the add/remove methods, then one must
  * trigger events as necessary.
  */
-declare class CompositionProvider {
+declare class DefaultCompositionProvider {
     constructor(publicAPI: MCT, compositionAPI: CompositionAPI);
 
     /**
@@ -538,6 +538,8 @@ declare class CompositionProvider {
 
     public reorder(domainObject: DomainObject, oldIndex: number, newIndex: number): void;
 }
+
+type CompositionProvider = Partial<DefaultCompositionProvider>;
 //#endregion
 
 //#region ObjectAPI
@@ -615,7 +617,7 @@ declare class ObjectAPI {
      * @param key an array of identifiers for root level objects, or a function
      * that returns a promise for an identifier or an array of root level objects.
      */
-    public addRoot(key: Identifier[] | (() => Promise<Identifier[]>)): void;
+    public addRoot(key: Identifier | Identifier[] | (() => Promise<Identifier[] | Identifier>)): void;
 
     /**
      * Register an object interceptor that transforms a domain object requested via module:openmct.ObjectAPI.get
@@ -675,6 +677,8 @@ declare class ObjectAPI {
  * are optional.
  */
 declare interface ObjectProvider {
+    get(identifier: Identifier): Promise<DomainObject>;
+
     /**
      * Create the given domain object in the corresponding persistence store
      * 
@@ -731,6 +735,7 @@ declare interface DomainObject {
     name: string,
     /** the user name of the creator of this domain object */
     creator?: string,
+    location: string,
     /**
      * the time, in milliseconds since the UNIX epoch, at which this domain
      * object was last modified
@@ -755,6 +760,7 @@ declare interface DomainObject {
  * (via openmct.objects.destroy) when you're done with it.
  */
 declare class MutableDomainObject implements DomainObject {
+    public location: string;
     public identifier: Identifier;
     public type: string;
     public name: string;
@@ -806,7 +812,7 @@ declare interface InterceptorDef {
 //#region TypeAPI
 declare interface TypeDefinition {
     /** the name for this type of object */
-    label: string,
+    name: string,
     /** a longer-form description of this type */
     description: string,
     /** a function which initializes the model for new domain objects of this type */
@@ -828,7 +834,7 @@ declare class TypeRegistry {
      * @param typeKey a string identifier for this type
      * @param type the type to add
      */
-    public addType(typeKey: string, type: Type): void;
+    public addType(typeKey: string, type: TypeDefinition): void;
 
     /**
      * List keys for all registered types.
@@ -962,6 +968,8 @@ declare interface TelemetryRequest {
  * [registered]{@link module:openmct.TelemetryAPI#addProvider}.
  */
 declare interface TelemetryProvider<T> {
+    supportsRequest?(domainObject: DomainObject): boolean;
+
     /**
      * Request historical telemetry for a domain object.
      * The `options` argument allows you to specify filters
@@ -972,7 +980,7 @@ declare interface TelemetryProvider<T> {
      * @param options options for this historical request
      * @returns a promise for an array of telemetry data
      */
-    request(domainObject: DomainObject, options: TelemetryRequest): Promise<T[]>;
+    request?(domainObject: DomainObject, options: TelemetryRequest): Promise<T[]>;
 
     /**
      * Subscribe to realtime telemetry for a specific domain object.
@@ -983,7 +991,7 @@ declare interface TelemetryProvider<T> {
      * @param callback the callback to invoke with new data, as it becomes available
      * @returns a function which may be called to terminate the subscription
      */
-    subscribe(domainObject: DomainObject, callback: (newData: T) => void): () => void;
+    subscribe?(domainObject: DomainObject, callback: (newData: T) => void): () => void;
 
     /**
      * Get a limit evaluator for this domain object.
@@ -1230,7 +1238,7 @@ declare class NotificationAPI {
 //#endregion
 
 //#region Editor API
-declare class Editor {
+declare class EditorAPI {
     public isEditing(): boolean;
 }
 //#endregion
@@ -1446,12 +1454,12 @@ interface InspectorViewProvider {
      */
     canView(selection: DomainObject): boolean;
 
-     /**
-     * Provides a view of the selection object in the inspector.
-     *
-     * @param selection the selection object
-     * @returns a view of this selection
-     */
+    /**
+    * Provides a view of the selection object in the inspector.
+    *
+    * @param selection the selection object
+    * @returns a view of this selection
+    */
     view(selection: DomainObject): View;
 }
 //#endregion
