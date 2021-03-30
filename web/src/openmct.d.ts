@@ -745,7 +745,8 @@ declare interface DomainObject {
      * if present, this will be used by the default composition provider to
      * load domain objects
      */
-    composition?: Identifier[]
+    composition?: Identifier[],
+    telemetry: { value: ValueMetadata[] };
 }
 
 /**
@@ -876,7 +877,63 @@ declare class Type {
 //#endregion
 
 //#region TelemetryAPI
-declare type ValueMetadata = object; // TODO: bruh what, generics would be so pog, also no docs on this?
+
+/** See [https://github.com/nasa/openmct/blob/master/API.md#telemetry-api] */
+declare interface ValueMetadata {
+    /** unique identifier for this field. */
+    key: string,
+    /**
+     * Hints allow views to intelligently select relevant attributes for display, and are required
+     * for most views to function. See section on "Value Hints" below.
+     */
+    hints: ValueHint,
+    /** a human readable label for this field. If omitted, defaults to `key`. */
+    name?: string,
+    /** identifies the property of a datum where this value is stored. If omitted, defaults to `key`. */
+    source?: string,
+    /**
+     * a specific format identifier, mapping to a formatter. If omitted, uses a default formatter.
+     * For enumerations, use `enum`. For timestamps, use `utc` if you are using utc dates, otherwise use
+     * a key mapping to your custom date format.
+     */
+    format?: string,
+    /** the units of this value, e.g. `km`, `seconds`, `parsecs` */
+    units?: string,
+    /**
+     * the minimum possible value of this measurement. Will be used by plots, gauges, etc to
+     * automatically set a min value.
+     */
+    min?: number,
+    /**
+     * the maximum possible value of this measurement. Will be used by plots, gauges, etc to
+     * automatically set a max value.
+     */
+    max?: number
+    /**
+     * for objects where `format` is `"enum"`, this array tracks all possible enumerations of the value.
+     * Each entry in this array is an object, with a `value` property that is the numerical value of
+     * the enumeration, and a `string` property that is the text value of the enumeration.
+     * ex: `{"value": 0, "string": "OFF"}`. If you use an enumerations array, `min` and `max` will be set
+     * automatically for you.
+     */
+    enumerations?: TelemetryEnumeration[],
+}
+
+declare interface TelemetryEnumeration {
+    value: number,
+    string: string,
+}
+
+/**
+ * Each telemetry value description has an object defining hints. Keys in this this object represent
+ * the hint itself, and the value represents the weight of that hint. A lower weight means the hint
+ * has a higher priority. For example, multiple values could be hinted for use as the y-axis of a plot
+ * (raw, engineering), but the highest priority would be the default choice. Likewise, a table will
+ * use hints to determine the default order of columns.
+ */
+declare type ValueHint = {
+    [x in "domain" | "range" | "image"]: number;
+};
 
 /**
  * A LimitEvaluator may be used to detect when telemetry values
