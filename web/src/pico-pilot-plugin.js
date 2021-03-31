@@ -52,7 +52,11 @@ const compositionProvider = {
     load: async () => {
         return [{
             namespace,
-            key: "1"
+            key: "test.1"
+        },
+        {
+            namespace,
+            key: "test.2"
         }]
     }
 };

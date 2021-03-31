@@ -746,7 +746,7 @@ declare interface DomainObject {
      * load domain objects
      */
     composition?: Identifier[],
-    telemetry: { value: ValueMetadata[] };
+    telemetry?: { value: ValueMetadata[] };
 }
 
 /**
@@ -761,6 +761,7 @@ declare interface DomainObject {
  * (via openmct.objects.destroy) when you're done with it.
  */
 declare class MutableDomainObject implements DomainObject {
+    public telemetry: { value: ValueMetadata[]; };
     public location: string;
     public identifier: Identifier;
     public type: string;
