@@ -60,113 +60,117 @@ async fn main() -> color_eyre::Result<()> {
             .build())
     });
 
-    app.listen("0.0.0.0:13705")
-        .await
-        .wrap_err("Failed to start telemetry server")?;
+    // app.listen("0.0.0.0:13705")
+    //     .await
+    //     .wrap_err("Failed to start telemetry server")?;
 
-    Ok(())
+    let serial_port = if let Some(port) = args.port {
+        port
+    } else {
+        info!("No serial port provided, prompting for input...");
 
-    // let serial_port = if let Some(port) = args.port {
-    //     port
-    // } else {
-    //     info!("No serial port provided, prompting for input...");
+        if let Some(port) = select_serial_port_prompt()? {
+            trace!("User selected item: {:?}", port);
 
-    //     if let Some(port) = select_serial_port_prompt()? {
-    //         trace!("User selected item: {:?}", port);
+            port.name
+        } else {
+            warn!("User did not select any port");
 
-    //         port.name
-    //     } else {
-    //         warn!("User did not select any port");
+            return Ok(());
+        }
+    };
 
-    //         return Ok(());
-    //     }
-    // };
+    let mut is_reconnecting = false;
+    let mut last_run_was_error = false;
 
-    // let mut is_reconnecting = false;
-    // let mut last_run_was_error = false;
+    loop {
+        let mut serial_port = match serialport::new(&serial_port, args.baud)
+            .timeout(Duration::from_millis(1000)) // FIXME: better timeout?
+            .open()
+        {
+            Ok(serial_port) => {
+                last_run_was_error = false;
+                serial_port
+            }
+            Err(e) => match e.kind() {
+                serialport::ErrorKind::Io(io::ErrorKind::NotFound) => {
+                    if is_reconnecting {
+                        warn!("Serial port does not exist..."); // FIXME: better way to busy wait for the thing to exist (https://github.com/notify-rs/notify)
 
-    // loop {
-    //     let mut serial_port = match serialport::new(&serial_port, args.baud)
-    //         .timeout(Duration::from_millis(1000)) // FIXME: better timeout?
-    //         .open()
-    //     {
-    //         Ok(serial_port) => {
-    //             last_run_was_error = false;
-    //             serial_port
-    //         }
-    //         Err(e) => match e.kind() {
-    //             serialport::ErrorKind::Io(io::ErrorKind::NotFound) => {
-    //                 if is_reconnecting {
-    //                     warn!("Serial port does not exist..."); // FIXME: better way to busy wait for the thing to exist (https://github.com/notify-rs/notify)
+                        thread::sleep(Duration::from_millis(1000));
 
-    //                     thread::sleep(Duration::from_millis(1000));
+                        continue;
+                    } else {
+                        error!("Serial port does not exist. Was it closed?");
+                        warn!("This can happen if the serial port was closed but the port list was not refreshed.");
 
-    //                     continue;
-    //                 } else {
-    //                     error!("Serial port does not exist. Was it closed?");
-    //                     warn!("This can happen if the serial port was closed but the port list was not refreshed.");
+                        return Ok(());
+                    }
+                }
+                _ => {
+                    if last_run_was_error {
+                        warn!("Failed to connect to serial port twice, exiting.");
 
-    //                     return Ok(());
-    //                 }
-    //             }
-    //             _ => {
-    //                 if last_run_was_error {
-    //                     warn!("Failed to connect to serial port twice, exiting.");
+                        return Err(e)
+                            .with_context(|| format!("Failed to open port {}", serial_port));
+                    } else {
+                        warn!("Failed to connect to serial port: {}", e);
+                        last_run_was_error = true;
 
-    //                     return Err(e)
-    //                         .with_context(|| format!("Failed to open port {}", serial_port));
-    //                 } else {
-    //                     warn!("Failed to connect to serial port: {}", e);
-    //                     last_run_was_error = true;
+                        thread::sleep(Duration::from_millis(1000));
 
-    //                     thread::sleep(Duration::from_millis(1000));
+                        continue; // FIXME: not have to manually sleep before continue
+                    }
+                }
+            },
+        }; // TODO: HANDLE DISCONNECTS (reconnects)
 
-    //                     continue; // FIXME: not have to manually sleep before continue
-    //                 }
-    //             }
-    //         },
-    //     }; // TODO: HANDLE DISCONNECTS (reconnects)
+        is_reconnecting = false;
 
-    //     is_reconnecting = false;
+        // let (mut serial_port_read, mut serial_port_write) = (
+        //     BufReader::new(
+        //         serial_port
+        //             .try_clone()
+        //             .context("Failed to clone the open serial port")?,
+        //     ),
+        //     BufWriter::new(serial_port),
+        // );
 
-    //     // let (mut serial_port_read, mut serial_port_write) = (
-    //     //     BufReader::new(
-    //     //         serial_port
-    //     //             .try_clone()
-    //     //             .context("Failed to clone the open serial port")?,
-    //     //     ),
-    //     //     BufWriter::new(serial_port),
-    //     // );
+        match io::copy(&mut serial_port, &mut io::stdout().lock()) {
+            Ok(bytes_copies) => info!("Transferred {} bytes", bytes_copies),
+            Err(e) => match e.kind() {
+                io::ErrorKind::TimedOut => {
+                    error!("Failed to connect to the serial port: timed out");
 
-    //     match io::copy(&mut serial_port, &mut io::stdout().lock()) {
-    //         Ok(bytes_copies) => info!("Transferred {} bytes", bytes_copies),
-    //         Err(e) => match e.kind() {
-    //             io::ErrorKind::TimedOut => {
-    //                 error!("Failed to connect to the serial port");
+                    thread::sleep(Duration::from_millis(1000));
 
-    //                 return Ok(());
-    //             }
-    //             io::ErrorKind::BrokenPipe => {
-    //                 if args.reconnect {
-    //                     warn!("Serial port disconnected!");
+                    info!("Attempting to reconnect...");
 
-    //                     thread::sleep(Duration::from_millis(1000));
+                    is_reconnecting = true;
+                    
+                    continue;
+                }
+                io::ErrorKind::BrokenPipe => {
+                    if args.reconnect {
+                        warn!("Serial port disconnected!");
 
-    //                     info!("Attempting to reconnect...");
+                        thread::sleep(Duration::from_millis(1000));
 
-    //                     is_reconnecting = true;
+                        info!("Attempting to reconnect...");
 
-    //                     continue;
-    //                 } else {
-    //                     error!("Serial port disconnected!");
+                        is_reconnecting = true;
 
-    //                     return Ok(());
-    //                 }
-    //             }
-    //             _ => Err(e).wrap_err("Failed to write from the serial port to stdout")?,
-    //         },
-    //     };
-    // }
+                        continue;
+                    } else {
+                        error!("Serial port disconnected!");
+
+                        return Ok(());
+                    }
+                }
+                _ => Err(e).wrap_err("Failed to write from the serial port to stdout")?,
+            },
+        };
+    }
 }
 
 fn setup_logger(verbose: usize) -> Result<(), SetLoggerError> {
