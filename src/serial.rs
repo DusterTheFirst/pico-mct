@@ -1,8 +1,6 @@
-use std::iter;
-
-use color_eyre::{eyre::Context, Result};
-use dialoguer::{theme::ColorfulTheme, Select};
+use async_std::task;
 use phf::phf_map;
+use serde::Serialize;
 use serialport::{SerialPortType, UsbPortInfo};
 
 // https://github.com/raspberrypi/usb-pid#assignment
@@ -20,7 +18,7 @@ pub static PICO_USB_PID_MAP: phf::Map<u16, PicoProduct> = phf_map! {
     0x1001u16 => PicoProduct { company: "Pimoroni", description: "Picade 2040", link: "http://pimoroni.com/picade2040" },
 };
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, Serialize)]
 pub struct PicoProduct {
     pub company: &'static str,
     pub description: &'static str,
@@ -34,53 +32,22 @@ pub struct USBSerialPort {
     pub info: UsbPortInfo,
 }
 
-pub fn select_serial_port_prompt() -> Result<Option<USBSerialPort>> {
-    Ok(loop {
-        let serial_ports = serialport::available_ports()
-            .wrap_err("Failed to get a listing of the serial ports")?
-            .into_iter()
-            .filter_map(|port| match port.port_type {
-                SerialPortType::UsbPort(info) => {
-                    if info.vid == PICO_USB_VID {
-                        Some(USBSerialPort {
-                            name: port.port_name,
-                            product: PICO_USB_PID_MAP.get(&info.pid),
-                            info,
-                        })
-                    } else {
-                        None
-                    }
-                }
-                _ => None,
-            })
-            .collect::<Box<_>>();
-
-        let serial_port_selection = serial_ports
-            .iter()
-            .map(|port| {
-                if let Some(product) = port.product {
-                    return format!("{} | {} <{}>", port.name, product.description, product.link);
+pub async fn get_serial_ports() -> serialport::Result<impl Iterator<Item = USBSerialPort>> {
+    Ok(task::spawn_blocking(|| serialport::available_ports())
+        .await?
+        .into_iter()
+        .filter_map(|port| match port.port_type {
+            SerialPortType::UsbPort(info) => {
+                if info.vid == PICO_USB_VID {
+                    Some(USBSerialPort {
+                        name: port.port_name,
+                        product: PICO_USB_PID_MAP.get(&info.pid),
+                        info,
+                    })
                 } else {
-                    return format!("{} | Unknown PID ({})", port.name, port.info.pid);
+                    None
                 }
-            })
-            .chain(iter::once("Refresh".into()))
-            .collect::<Box<_>>();
-
-        let selection = Select::with_theme(&ColorfulTheme::default())
-            .items(&serial_port_selection)
-            .default(0)
-            .interact_opt()
-            .wrap_err("Failed to get valid user input")?;
-
-        match selection {
-            Some(index) if index < serial_ports.len() => {
-                break Some(serial_ports[index].clone());
             }
-            Some(_) => continue,
-            None => {
-                break None;
-            }
-        }
-    })
+            _ => None,
+        }))
 }

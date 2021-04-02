@@ -5,14 +5,14 @@ authors = ["Zachary Kohnen <14093962+DusterTheFirst@users.noreply.github.com>"]
 edition = "2018"
 
 [dependencies]
-log = "0.4"
-simplelog = "0.10"
-structopt = { version = "0.3", features = ["color"] }
-clap = "2.33"
+log = { version = "1.0", package = "kv-log-macro" }
 serialport = "4.0"
-phf = { version = "0.8.0", features = ["macros"] }
-dialoguer = "0.8"
+phf = { version = "0.8", features = ["macros"] }
 color-eyre = "0.5"
 tide = "0.16"
 async-std = { version = "1.9", features = ["attributes"] }
 serde = { version = "1.0", features = ["derive"] }
+femme = "2.1.1"
+
+[patch.crates-io]
+async-attributes = { path = "../async-attributes" }
