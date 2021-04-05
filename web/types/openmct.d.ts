@@ -188,10 +188,13 @@ declare class TimeAPI {
 
     /**
      * Get or set the time system of the TimeAPI.
-     * 
+     *
      * @returns The currently applied time system
      */
-    public timeSystem(timeSystemOrKey: TimeSystem | string, bounds?: TimeBounds): TimeSystem;
+    public timeSystem(
+        timeSystemOrKey: TimeSystem | string,
+        bounds?: TimeBounds
+    ): TimeSystem;
 
     /**
      * Get or set the Time of Interest. The Time of Interest is a single point
@@ -199,10 +202,10 @@ declare class TimeAPI {
      * be manipulated by the user from the time conductor or from other views.
      * The time of interest can effectively be unset by assigning a value of
      * 'undefined'.
-     * 
+     *
      * @returns the current time of interest
      */
-    public timeOfInterest(newTOI?: number): number
+    public timeOfInterest(newTOI?: number): number;
 
     /**
      * Set the active clock. Tick source will be immediately subscribed to
@@ -213,7 +216,7 @@ declare class TimeAPI {
      * @param offsets on each tick these will be used to calculate
      * the start and end bounds. This maintains a sliding time window of a fixed
      * width that automatically updates.
-     * 
+     *
      * @return the currently active clock;
      */
     public clock(keyOrClock: Clock | string, offsets: ClockOffsets): Clock;
@@ -348,7 +351,6 @@ declare class CompositionAPI {
      */
     public get(domainObject: DomainObject): CompositionCollection;
 
-
     /**
      * Add a composition policy. Composition policies may disallow domain
      * objects from containing other domain objects.
@@ -370,7 +372,10 @@ declare class CompositionAPI {
  *        would be contained
  * @returns false if this composition should be disallowed
  */
-declare type CompositionPolicy = (containingObject: DomainObject, containedObject: DomainObject) => boolean;
+declare type CompositionPolicy = (
+    containingObject: DomainObject,
+    containedObject: DomainObject
+) => boolean;
 
 /**
  * A CompositionCollection represents the list of domain objects contained
@@ -391,7 +396,11 @@ declare type CompositionPolicy = (containingObject: DomainObject, containedObjec
  * @param api the composition API, for policy checks
  */
 declare class CompositionCollection {
-    constructor(domainObject: DomainObject, provider: CompositionProvider, api: CompositionAPI);
+    constructor(
+        domainObject: DomainObject,
+        provider: CompositionProvider,
+        api: CompositionAPI
+    );
 
     /**
      * Listen for changes to this composition.  Supports 'add', 'remove', and
@@ -401,7 +410,11 @@ declare class CompositionCollection {
      * @param callback to trigger when event occurs.
      * @param [context] context to use when invoking callback, optional.
      */
-    public on<T>(event: "add" | "remove" | "reorder", callback: (context: T) => void, context?: T): void;
+    public on<T>(
+        event: "add" | "remove" | "reorder",
+        callback: (context: T) => void,
+        context?: T
+    ): void;
 
     /**
      * Remove a listener.  Must be called with same exact parameters as
@@ -411,7 +424,11 @@ declare class CompositionCollection {
      * @param callback
      * @param [context]
      */
-    public off<T>(event: "add" | "remove" | "reorder", callback: (context: T) => void, context?: T): void;
+    public off<T>(
+        event: "add" | "remove" | "reorder",
+        callback: (context: T) => void,
+        context?: T
+    ): void;
 
     /**
      * Add a domain object to this composition.
@@ -500,7 +517,12 @@ declare class DefaultCompositionProvider {
      * @param callback callback to invoke when event is triggered.
      * @param [context] context to use when invoking callback.
      */
-    public on<T>(domainObject: DomainObject, event: "add" | "remove", callback: (context: T, event: any) => void, context?: T): void;
+    public on<T>(
+        domainObject: DomainObject,
+        event: "add" | "remove",
+        callback: (context: T, event: any) => void,
+        context?: T
+    ): void;
 
     /**
      * Remove a listener that was previously added for a given domain object.
@@ -512,7 +534,12 @@ declare class DefaultCompositionProvider {
      * @param callback callback to remove.
      * @param [context] context of callback to remove.
      */
-    public off<T>(domainObject: DomainObject, event: "add" | "remove", callback: (context: T, event: any) => void, context?: T): void;
+    public off<T>(
+        domainObject: DomainObject,
+        event: "add" | "remove",
+        callback: (context: T, event: any) => void,
+        context?: T
+    ): void;
 
     /**
      * Remove a domain object from another domain object's composition.
@@ -536,7 +563,11 @@ declare class DefaultCompositionProvider {
      */
     public add(domainObject: DomainObject, child: DomainObject): void;
 
-    public reorder(domainObject: DomainObject, oldIndex: number, newIndex: number): void;
+    public reorder(
+        domainObject: DomainObject,
+        oldIndex: number,
+        newIndex: number
+    ): void;
 }
 
 type CompositionProvider = Partial<DefaultCompositionProvider>;
@@ -562,7 +593,10 @@ declare class ObjectAPI {
      * @param provider the provider which will handle loading domain objects
      * from this namespace
      */
-    public addProvider(namespace: string, provider: Partial<ObjectProvider>): void;
+    public addProvider(
+        namespace: string,
+        provider: Partial<ObjectProvider>
+    ): void;
 
     /**
      * Get a domain object.
@@ -587,7 +621,10 @@ declare class ObjectAPI {
      * @returns an array of promises returned from each object provider's search function
      *          each resolving to domain objects matching provided search query and options.
      */
-    public search(query: string, abortSignal: AbortSignal): Array<Promise<DomainObject>>;
+    public search(
+        query: string,
+        abortSignal: AbortSignal
+    ): Array<Promise<DomainObject>>;
 
     /**
      * Will fetch object for the given identifier, returning a version of the object that will automatically keep
@@ -617,7 +654,12 @@ declare class ObjectAPI {
      * @param key an array of identifiers for root level objects, or a function
      * that returns a promise for an identifier or an array of root level objects.
      */
-    public addRoot(key: Identifier | Identifier[] | (() => Promise<Identifier[] | Identifier>)): void;
+    public addRoot(
+        key:
+            | Identifier
+            | Identifier[]
+            | (() => Promise<Identifier[] | Identifier>)
+    ): void;
 
     /**
      * Register an object interceptor that transforms a domain object requested via module:openmct.ObjectAPI.get
@@ -649,7 +691,11 @@ declare class ObjectAPI {
      * @param callback a callback to invoke when new values for
      *        this property are observed
      */
-    public observe(domainObject: DomainObject, path: string, callback: (domainObject: DomainObject) => void): void;
+    public observe(
+        domainObject: DomainObject,
+        path: string,
+        callback: (domainObject: DomainObject) => void
+    ): void;
 
     /**
      * @returns A string representation of the given identifier, including namespace and key
@@ -667,7 +713,10 @@ declare class ObjectAPI {
      */
     public areIdsEqual(...identifiers: Identifier[]): boolean;
 
-    public getOriginalPath(identifier: Identifier, path?: DomainObject[]): DomainObject[];
+    public getOriginalPath(
+        identifier: Identifier,
+        path?: DomainObject[]
+    ): DomainObject[];
 }
 
 /**
@@ -681,7 +730,7 @@ declare interface ObjectProvider {
 
     /**
      * Create the given domain object in the corresponding persistence store
-     * 
+     *
      * @param domainObject the domain object to create
      * @returns a promise which will resolve when the domain object
      *          has been created, or be rejected if it cannot be saved
@@ -712,7 +761,7 @@ declare interface ObjectProvider {
  */
 declare interface Identifier {
     /** the namespace to/from which this domain object should be loaded/stored. */
-    namespace: string,
+    namespace: string;
     /** a unique identifier for the domain object within that namespace */
     key: string;
 }
@@ -728,24 +777,24 @@ declare interface Identifier {
  */
 declare interface DomainObject {
     /** a key/namespace pair which uniquely identifies this domain object */
-    identifier: Identifier,
+    identifier: Identifier;
     /** the type of domain object */
-    type: string,
+    type: string;
     /** the human-readable name for this domain object */
-    name: string,
+    name: string;
     /** the user name of the creator of this domain object */
-    creator?: string,
-    location: string,
+    creator?: string;
+    location: string;
     /**
      * the time, in milliseconds since the UNIX epoch, at which this domain
      * object was last modified
      */
-    modified?: number,
+    modified?: number;
     /**
      * if present, this will be used by the default composition provider to
      * load domain objects
      */
-    composition?: Identifier[],
+    composition?: Identifier[];
     telemetry?: { value: ValueMetadata[] };
 }
 
@@ -761,7 +810,7 @@ declare interface DomainObject {
  * (via openmct.objects.destroy) when you're done with it.
  */
 declare class MutableDomainObject implements DomainObject {
-    public telemetry: { value: ValueMetadata[]; };
+    public telemetry: { value: ValueMetadata[] };
     public location: string;
     public identifier: Identifier;
     public type: string;
@@ -770,8 +819,15 @@ declare class MutableDomainObject implements DomainObject {
     public modified?: number | undefined;
     public composition?: Identifier[] | undefined;
 
-    public static createMutable(object: DomainObject, mutationTopic: string): MutableDomainObject;
-    public static mutateObject<T>(object: DomainObject, path: string, value: T): void;
+    public static createMutable(
+        object: DomainObject,
+        mutationTopic: string
+    ): MutableDomainObject;
+    public static mutateObject<T>(
+        object: DomainObject,
+        path: string,
+        value: T
+    ): void;
 
     public $observe(path: string, callback: Function): Function;
     public $set<T>(path: string, value: T): void;
@@ -795,10 +851,13 @@ declare class InterceptorRegistry {
 
     /**
      * Retrieve all interceptors applicable to a domain object.
-     * 
+     *
      * @returns the registered interceptors for this identifier/object
      */
-    public getInterceptors(identifier: Identifier, object: Object): InterceptorDef;
+    public getInterceptors(
+        identifier: Identifier,
+        object: Object
+    ): InterceptorDef;
 }
 
 declare interface InterceptorDef {
@@ -814,15 +873,15 @@ declare interface InterceptorDef {
 //#region TypeAPI
 declare interface TypeDefinition {
     /** the name for this type of object */
-    name: string,
+    name: string;
     /** a longer-form description of this type */
-    description: string,
+    description: string;
     /** a function which initializes the model for new domain objects of this type */
-    initialize?: (object: DomainObject) => void,
+    initialize?: (object: DomainObject) => void;
     /** true if users should be allowed to create this type (default: false) */
-    creatable?: boolean,
+    creatable?: boolean;
     /** the CSS class to apply for icons */
-    cssClass?: string,
+    cssClass?: string;
 }
 
 /**
@@ -840,14 +899,14 @@ declare class TypeRegistry {
 
     /**
      * List keys for all registered types.
-     * 
+     *
      * @returns all registered type keys
      */
     public listKeys(): string[];
 
     /**
      * Retrieve a registered type by its key.
-     * 
+     *
      * @param typeKey the key for this type
      * @returns the registered type
      */
@@ -865,15 +924,21 @@ declare class Type {
 
     /**
      * Check if a domain object is an instance of this type.
-     * 
+     *
      * @returns true if the domain object is of this type
      */
     public check(domainObject: DomainObject): boolean;
 
     /**
-    * Create a type definition from a legacy definition.
-    */
-    public definitionFromLegacyDefinition(legacyDefinition: { name: string, cssClass: string, description: string, properties: string, model: any }): TypeDefinition;
+     * Create a type definition from a legacy definition.
+     */
+    public definitionFromLegacyDefinition(legacyDefinition: {
+        name: string;
+        cssClass: string;
+        description: string;
+        properties: string;
+        model: any;
+    }): TypeDefinition;
 }
 //#endregion
 
@@ -882,34 +947,34 @@ declare class Type {
 /** See [https://github.com/nasa/openmct/blob/master/API.md#telemetry-api] */
 declare interface ValueMetadata {
     /** unique identifier for this field. */
-    key: string,
+    key: string;
     /**
      * Hints allow views to intelligently select relevant attributes for display, and are required
      * for most views to function. See section on "Value Hints" below.
      */
-    hints: ValueHint,
+    hints: ValueHint;
     /** a human readable label for this field. If omitted, defaults to `key`. */
-    name?: string,
+    name?: string;
     /** identifies the property of a datum where this value is stored. If omitted, defaults to `key`. */
-    source?: string,
+    source?: string;
     /**
      * a specific format identifier, mapping to a formatter. If omitted, uses a default formatter.
      * For enumerations, use `enum`. For timestamps, use `utc` if you are using utc dates, otherwise use
      * a key mapping to your custom date format.
      */
-    format?: string,
+    format?: string;
     /** the units of this value, e.g. `km`, `seconds`, `parsecs` */
-    units?: string,
+    units?: string;
     /**
      * the minimum possible value of this measurement. Will be used by plots, gauges, etc to
      * automatically set a min value.
      */
-    min?: number,
+    min?: number;
     /**
      * the maximum possible value of this measurement. Will be used by plots, gauges, etc to
      * automatically set a max value.
      */
-    max?: number
+    max?: number;
     /**
      * for objects where `format` is `"enum"`, this array tracks all possible enumerations of the value.
      * Each entry in this array is an object, with a `value` property that is the numerical value of
@@ -917,12 +982,12 @@ declare interface ValueMetadata {
      * ex: `{"value": 0, "string": "OFF"}`. If you use an enumerations array, `min` and `max` will be set
      * automatically for you.
      */
-    enumerations?: TelemetryEnumeration[],
+    enumerations?: TelemetryEnumeration[];
 }
 
 declare interface TelemetryEnumeration {
-    value: number,
-    string: string,
+    value: number;
+    string: string;
 }
 
 /**
@@ -982,21 +1047,21 @@ declare interface TelemetryFormatter {
  */
 declare interface TelemetryProperty {
     /** the name of the property in the datum which contains this telemetry value */
-    key: string,
+    key: string;
     /** the human-readable name for this property */
-    name: string,
+    name: string;
     /** the units associated with this property */
-    units?: string,
+    units?: string;
     /** true if this property is a timestamp, or may be otherwise used to order
      * telemetry in a time-like fashion; default is false
      */
-    temporal?: boolean,
+    temporal?: boolean;
     /** true if the values for this property  can be interpreted plainly as numbers; default is true */
-    numeric?: boolean,
+    numeric?: boolean;
     /** true if this property may have only certain specific values; default is false */
-    enumerated?: boolean,
+    enumerated?: boolean;
     /** for enumerated states, an ordered list of possible values */
-    values?: string[]
+    values?: string[];
 }
 
 /**
@@ -1008,11 +1073,11 @@ declare interface TelemetryRequest {
      * a "-" sign to sort in ascending or descending order respectively. If
      * no prefix is present, ascending order will be used.
      */
-    sort: string,
+    sort: string;
     /** the lower bound for values of the sorting property */
-    start: any,
+    start: any;
     /** the upper bound for values of the sorting property */
-    end: any,
+    end: any;
     /**
      * symbolic identifiers for strategies (such as `minmax`) which may be recognized
      * by providers; these will be tried in order until an appropriate provider is found
@@ -1038,7 +1103,10 @@ declare interface TelemetryProvider<T> {
      * @param options options for this historical request
      * @returns a promise for an array of telemetry data
      */
-    request?(domainObject: DomainObject, options: TelemetryRequest): Promise<T[]>;
+    request?(
+        domainObject: DomainObject,
+        options: TelemetryRequest
+    ): Promise<T[]>;
 
     /**
      * Subscribe to realtime telemetry for a specific domain object.
@@ -1049,7 +1117,10 @@ declare interface TelemetryProvider<T> {
      * @param callback the callback to invoke with new data, as it becomes available
      * @returns a function which may be called to terminate the subscription
      */
-    subscribe?(domainObject: DomainObject, callback: (newData: T) => void): () => void;
+    subscribe?(
+        domainObject: DomainObject,
+        callback: (newData: T) => void
+    ): () => void;
 
     /**
      * Get a limit evaluator for this domain object.
@@ -1093,7 +1164,10 @@ declare class TelemetryAPI {
      * @param valueMetadata valueMetadata for given telemetry object
      * @param format custom formatter string (eg: %.4f, &lts etc.)
      */
-    public customStringFormatter<T>(valueMetadata: T, format: string): FormatService;
+    public customStringFormatter<T>(
+        valueMetadata: T,
+        format: string
+    ): FormatService;
 
     /**
      * Return true if the given domainObject is a telemetry object.  A telemetry
@@ -1107,7 +1181,7 @@ declare class TelemetryAPI {
     /**
      * Register a telemetry provider with the telemetry service. This
      * allows you to connect alternative telemetry sources.
-     * 
+     *
      * @param provider the new telemetry provider
      */
     public addProvider<T>(provider: TelemetryProvider<T>): void;
@@ -1123,12 +1197,17 @@ declare class TelemetryAPI {
      * Return an array of value Metadata that are common to all supplied
      * telemetry objects and match the requested hints.
      */
-    public commonValuesForHints(metadata: any[], hints: string): ValueMetadata[];
+    public commonValuesForHints(
+        metadata: any[],
+        hints: string
+    ): ValueMetadata[];
 
     /**
      * Get a value formatter for a given valueMetadata.
      */
-    public getValueFormatter(valueMetadata: ValueMetadata): TelemetryValueFormatter;
+    public getValueFormatter(
+        valueMetadata: ValueMetadata
+    ): TelemetryValueFormatter;
 
     /** Get a value formatter for a given key. */
     public getFormatter(key: String): Format;
@@ -1137,7 +1216,9 @@ declare class TelemetryAPI {
      * Get a format map of all value formatters for a given piece of telemetry
      * metadata.
      */
-    public getFormatMap(metadata: object): { [key: string]: TelemetryValueFormatter };
+    public getFormatMap(
+        metadata: object
+    ): { [key: string]: TelemetryValueFormatter };
 
     /**
      * Register a new telemetry data formatter.
@@ -1159,15 +1240,15 @@ declare class TelemetryMetadataManager {
     public value(key: string): ValueMetadata;
 
     /**
-    * Returns all value metadata, sorted by priority.
-    */
+     * Returns all value metadata, sorted by priority.
+     */
     public values(): ValueMetadata[];
 
     /**
      * Get an array of valueMetadata that posses all hints requested.
      * Array is sorted based on hint priority.
      */
-    public valuesForHints(hints: string[]): ValueMetadata[]
+    public valuesForHints(hints: string[]): ValueMetadata[];
 
     public getFilterableValues(): ValueMetadata[];
 
@@ -1238,25 +1319,25 @@ declare interface NotificationModel {
     progressPerc?: number | "unknown";
     /** A message conveying progress of some ongoing task. */
     progressText?: string;
-    severity: "error" | "alert" | "info",
+    severity: "error" | "alert" | "info";
 }
 
 interface NotificationOptions {
     /** in milliseconds to automatically dismisses notification */
-    autoDismissTimeout?: number,
+    autoDismissTimeout?: number;
     link?: {
         /** callback function */
-        onClick(): void,
+        onClick(): void;
         /** css class name to add style on link */
-        cssClass: string,
+        cssClass: string;
         /** text to display for link */
-        text: string
-    }
+        text: string;
+    };
 }
 
 declare interface Notification {
     dismiss(): void;
-    model: NotificationModel | { timestamp: string },
+    model: NotificationModel | { timestamp: string };
     progress?(progressPerc: number | "unknown", progressText: string): void;
 }
 
@@ -1289,7 +1370,11 @@ declare class NotificationAPI {
      * @param progressPerc A value between 0 and 100, or the string 'unknown'.
      * @param [progressText] Text description of progress (eg. "10 of 20 objects copied").
      */
-    public progress(message: string, progressPerc: number | "unknown", progressText?: string): Notification;
+    public progress(
+        message: string,
+        progressPerc: number | "unknown",
+        progressText?: string
+    ): Notification;
 
     public dismissAllNotifications(): void;
 }
@@ -1315,8 +1400,6 @@ declare class ViewRegistry {
      * @param provider the provider for this view
      */
     public addProvider(provider: ViewProvider): void;
-
-
 }
 
 /**
@@ -1368,13 +1451,13 @@ declare interface View {
  */
 declare interface ViewProvider {
     /** a unique identifier for this view */
-    key: string,
+    key: string;
     /** the human-readable name of this view */
-    name: string,
+    name: string;
     /** a longer-form description (typically a single sentence or short paragraph) of this kind of view */
-    description?: string,
+    description?: string;
     /** the CSS class to apply to labels for this view (to add icons, for instance) */
-    cssClass?: string,
+    cssClass?: string;
 
     /**
      * Check if this provider can supply views for a domain object.
@@ -1410,7 +1493,6 @@ declare interface ViewProvider {
      */
     canEdit?(domainObject: DomainObject, objectPath: DomainObject[]): boolean;
 
-
     /**
      * Optional method determining the priority of a given view. If this
      * function is not defined on a view provider, then a default priority
@@ -1427,7 +1509,7 @@ declare interface ViewProvider {
      * Provide a view of this object.
      *
      * When called by Open MCT, the following arguments will be passed to it:
-     * 
+     *
      * @param domainObject - the domainObject that the view is provided for
      * @param objectPath - The current contextual object path of the view object
      *                     eg current domainObject is located under MyItems which is under Root
@@ -1463,8 +1545,6 @@ declare class InspectorViewRegistry {
      * @param provider the provider for this view
      */
     public addProvider(provider: InspectorViewProvider): void;
-
-
 }
 
 /**
@@ -1500,24 +1580,24 @@ interface InspectorViewProvider {
     /** name the human-readable name of this view */
     name: string;
     /** a longer-form description (typically a single sentence or short paragraph) of this kind of view */
-    description?: string,
+    description?: string;
     /** the CSS class to apply to labels for this view (to add icons, for instance) */
     cssClass?: string;
 
     /**
      * Checks if this provider can supply views for a selection.
-     * 
+     *
      * @returns 'true' if the view applies to the provided selection,
      *          otherwise 'false'.
      */
     canView(selection: DomainObject): boolean;
 
     /**
-    * Provides a view of the selection object in the inspector.
-    *
-    * @param selection the selection object
-    * @returns a view of this selection
-    */
+     * Provides a view of the selection object in the inspector.
+     *
+     * @param selection the selection object
+     * @returns a view of this selection
+     */
     view(selection: DomainObject): View;
 }
 //#endregion
@@ -1567,7 +1647,7 @@ declare interface ToolbarProvider {
      * @param selection the selection object
      * @returns  an array of objects defining controls for the toolbar.
      */
-    toolbar(selection: DomainObject): DomainObject[]
+    toolbar(selection: DomainObject): DomainObject[];
 }
 //#endregion
 //#endregion
@@ -1595,7 +1675,7 @@ declare interface Format {
     /**
      * Determine whether or not some text (typically user input) can
      * be parsed to a numeric value by this format.
-     * 
+     *
      * @param text the text to parse
      * @returns true if the text can be parsed
      */
@@ -1604,7 +1684,7 @@ declare interface Format {
     /**
      * Convert a numeric value to a text value for display using
      * this format.
-     * 
+     *
      * @param value the numeric value to format
      * @param [minValue] Contextual information for scaled formatting used in linear scales such as conductor
      * and plot axes. Specifies the smallest number on the scale.
@@ -1614,7 +1694,12 @@ declare interface Format {
      * and plot axes. The number of labels on the scale.
      * @returns the text representation of the value
      */
-    format(value: number, minValue?: number, maxValue?: number, count?: number): string;
+    format(
+        value: number,
+        minValue?: number,
+        maxValue?: number,
+        count?: number
+    ): string;
 }
 
 /**
@@ -1625,7 +1710,7 @@ declare interface Format {
 declare interface FormatService {
     /**
      * Look up a format by its symbolic identifier.
-     * 
+     *
      * @param key the identifier for this format
      * @returns the format
      * @throws {Error} errors when the requested format is unrecognized
@@ -1635,7 +1720,7 @@ declare interface FormatService {
 
 /**
  * Provides formats from the `formats` extension category.
- * 
+ *
  * @param format constructors, from the `formats` extension category.
  */
 declare class FormatProvider implements FormatService {
@@ -1655,7 +1740,10 @@ declare module plugins {
      * Static Root Plugin: takes an export file and exposes it as a new root
      * object.
      */
-    function StaticRootPlugin(namespace: string, exportUrl: string): OpenMCTPlugin;
+    function StaticRootPlugin(
+        namespace: string,
+        exportUrl: string
+    ): OpenMCTPlugin;
 
     /**
      * A tabular view showing the latest values of multiple telemetry points at
@@ -1668,7 +1756,9 @@ declare module plugins {
      */
     function AutoflowView(options: { type: string }): OpenMCTPlugin;
 
-    function Conductor(options: { menuOptions: { timeSystem: string, clock: string }[] }): OpenMCTPlugin;
+    function Conductor(options: {
+        menuOptions: { timeSystem: string; clock: string }[];
+    }): OpenMCTPlugin;
 
     function CouchDB(options: { url?: string } | string): OpenMCTPlugin;
 
@@ -1684,7 +1774,12 @@ declare module plugins {
 
     function SummaryWidget(): OpenMCTPlugin;
     function TelemetryMean(): OpenMCTPlugin;
-    function URLIndicator(opts: { url: string, label?: string, interval?: string, iconClass?: string }): OpenMCTPlugin;
+    function URLIndicator(opts: {
+        url: string;
+        label?: string;
+        interval?: string;
+        iconClass?: string;
+    }): OpenMCTPlugin;
     function Notebook(): OpenMCTPlugin;
     function DisplayLayout(options: { showAsView: string[] }): OpenMCTPlugin;
     function FolderView(): OpenMCTPlugin;
@@ -1694,7 +1789,10 @@ declare module plugins {
     function Filters(supportedObjectTypesArray: string[]): OpenMCTPlugin;
     function ObjectMigration(): OpenMCTPlugin;
     function GoToOriginalAction(): OpenMCTPlugin;
-    function ClearData(appliesToObjects: string[], options?: { indicator: boolean }): OpenMCTPlugin;
+    function ClearData(
+        appliesToObjects: string[],
+        options?: { indicator: boolean }
+    ): OpenMCTPlugin;
     function WebPage(): OpenMCTPlugin;
 
     /** Theme */
@@ -1718,11 +1816,15 @@ declare module plugins {
     function ViewDatumAction(): OpenMCTPlugin;
     function ObjectInterceptors(): OpenMCTPlugin;
     function PerformanceIndicator(): OpenMCTPlugin;
-    function CouchDBSearchFolder(folderName: string, couchPlugin: { couchProvider: unknown }, searchFilter: string): OpenMCTPlugin;
+    function CouchDBSearchFolder(
+        folderName: string,
+        couchPlugin: { couchProvider: unknown },
+        searchFilter: string
+    ): OpenMCTPlugin;
     function Timeline(): OpenMCTPlugin;
 
     // Legacy
     function LocalStorage(): OpenMCTPlugin;
     function MyItems(): OpenMCTPlugin;
-    function Elasticsearch(): OpenMCTPlugin
+    function Elasticsearch(): OpenMCTPlugin;
 }
