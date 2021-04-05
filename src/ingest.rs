@@ -1,20 +1,19 @@
-use std::sync::mpsc::Receiver;
+use std::{io};
 
+use crossfire::mpsc::TxUnbounded;
+use log::debug;
 use serialport::SerialPort;
 
-// pub fn ingest_main(rx: Receiver<Option<Box<dyn SerialPort>>>) {
-//     let mut serial_port = None;
+pub fn ingest(tx: TxUnbounded<Vec<u8>>, mut serial_port: Box<dyn SerialPort>) -> io::Result<()> {
+    let mut buf = vec![0; 100];
 
-//     loop {
-//         if let Some(serial_port) = rx.try_recv() {
+    loop {
+        debug!("ingesting");
 
-//         } else {
-//             serial_port = None;
-//             continue;
-//         }
-//     }
-// }
+        serial_port.read_exact(&mut buf[0..100])?;
 
-// pub fn ingest_data() {
-
-// }
+        if let Err(_) = tx.send(buf.clone()) {
+            return Ok(());
+        }
+    }
+}
