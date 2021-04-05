@@ -4,7 +4,8 @@ import { telemetry_type } from "./constants.js";
 export function HistoricalTelemetryPlugin() {
     return (openmct) => {
         openmct.telemetry.addProvider({
-            supportsRequest: (domainObject) => domainObject.type === telemetry_type,
+            supportsRequest: (domainObject) =>
+                domainObject.type === telemetry_type,
             request: async (domainObject, options) => {
                 // const url = '/history/' +
                 //     domainObject.identifier.key +
@@ -18,7 +19,7 @@ export function HistoricalTelemetryPlugin() {
                 // TODO:
 
                 return [];
-            }
+            },
         });
-    }
+    };
 }

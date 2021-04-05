@@ -3,7 +3,7 @@ use std::{collections::BTreeMap, time::Duration};
 use anyhow::anyhow;
 use async_std::task;
 use crossfire::mpsc::unbounded_future;
-use log::{debug, error};
+use log::{debug, error, info};
 use serde::Deserialize;
 use tide::{sse::Sender, Body, Request, StatusCode};
 
@@ -28,14 +28,14 @@ struct DeviceConnectQuery {
 pub async fn device_connect(req: Request<State>, sender: Sender) -> tide::Result<()> {
     let DeviceConnectQuery { port: port_name } = req.query()?;
 
-    if port_name.len() == 0 {
+    if port_name.is_empty() {
         return Err(tide::Error::new(
             StatusCode::BadRequest,
             anyhow!("device {} does not exist", port_name),
         ));
     }
 
-    // TODO: not 1s for timeout?
+    // FIXME: not 1s for timeout?
     // Assuming Pico SDK USB CDC so baud rate does not matter
 
     match serialport::new(&port_name, 0)
@@ -43,23 +43,38 @@ pub async fn device_connect(req: Request<State>, sender: Sender) -> tide::Result
         .open()
     {
         Ok(new_port) => {
-            debug!("Connected to new serial port {}", port_name);
+            info!("Connected to serial port {}", port_name);
 
             let (tx, rx) = unbounded_future();
 
-            // TODO:
             let ingest_task = task::spawn_blocking(move || ingest(tx, new_port));
 
-            while let Ok(buf) = rx.recv().await {
-                debug!("sending");
-                sender.send("test", format!("{:?}", buf), None).await.expect("h?");
+            loop {
+                let packet = match rx.recv().await {
+                    Ok(packet) => packet,
+                    Err(_) => {
+                        error!("Failed to get a packet from the ingest thread");
+                        break;
+                    }
+                };
+
+                match sender
+                    .send("test", serde_json::to_string(&packet)?, None)
+                    .await
+                {
+                    Ok(()) => {}
+                    Err(_) => {
+                        info!("Client disconnected from event source");
+                        break;
+                    }
+                }
             }
 
-            debug!("Disconnecting from device");
+            debug!("Disconnecting from device {}", port_name);
 
             ingest_task.cancel().await;
 
-            debug!("Disconnected from device {}", port_name);
+            info!("Disconnected from device {}", port_name);
 
             Ok(())
         }

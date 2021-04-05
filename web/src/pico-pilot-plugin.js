@@ -1,4 +1,4 @@
-import { namespace, telemetry_type } from "./constants.js"
+import { namespace, telemetry_type } from "./constants.js";
 
 /** @returns {OpenMCTPlugin} */
 export function PicoPilotPlugin() {
@@ -7,19 +7,19 @@ export function PicoPilotPlugin() {
 
         openmct.objects.addRoot({
             namespace,
-            key: "avionics"
+            key: "avionics",
         });
 
         openmct.objects.addProvider(namespace, objectProvider);
 
         openmct.types.addType(telemetry_type, {
-            name: 'Example Telemetry Point',
-            description: 'Example telemetry point from our happy tutorial.',
-            cssClass: 'icon-telemetry'
+            name: "Example Telemetry Point",
+            description: "Example telemetry point from our happy tutorial.",
+            cssClass: "icon-telemetry",
         });
 
         openmct.composition.addProvider(compositionProvider);
-    }
+    };
 }
 
 /** @type {Partial<ObjectProvider>} */
@@ -30,33 +30,37 @@ const objectProvider = {
                 identifier,
                 name: "Pico Pilot",
                 type: "folder",
-                location: "ROOT"
-            }
+                location: "ROOT",
+            };
         } else {
             return {
                 identifier,
                 name: `Pico Pilot (${identifier.key})`,
                 type: telemetry_type,
-                location: `${namespace}:avionics`
-            }
+                location: `${namespace}:avionics`,
+            };
         }
-
-    }
+    },
 };
 
 /** @type {CompositionProvider} */
 const compositionProvider = {
     appliesTo: (object) => {
-        return object.identifier.namespace === namespace && object.type === "folder";
+        return (
+            object.identifier.namespace === namespace &&
+            object.type === "folder"
+        );
     },
     load: async () => {
-        return [{
-            namespace,
-            key: "test.1"
-        },
-        {
-            namespace,
-            key: "test.2"
-        }]
-    }
+        return [
+            {
+                namespace,
+                key: "test.1",
+            },
+            {
+                namespace,
+                key: "test.2",
+            },
+        ];
+    },
 };

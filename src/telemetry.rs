@@ -50,7 +50,7 @@ pub struct TelemetryEnumeration<'s> {
 pub enum ValueHint {
     Domain(u32),
     Range(u32),
-    Image(u32)
+    Image(u32),
 }
 
 pub fn get_telemetry_values() -> Vec<TelemetryValue<'static>> {

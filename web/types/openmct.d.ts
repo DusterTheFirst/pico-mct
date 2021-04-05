@@ -17,7 +17,7 @@
 
 declare const openmct: MCT;
 
-type OpenMCTPlugin = (openmct: MCT) => void;
+declare type OpenMCTPlugin = (openmct: MCT) => void;
 
 declare class MCT {
     /**

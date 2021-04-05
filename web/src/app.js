@@ -3,9 +3,7 @@ import { HistoricalTelemetryPlugin } from "./historical-telemetry-plugin.js";
 import { telemetry_server } from "./constants.js";
 
 /**
- * @typedef PortControlElements
- * @property {HTMLUListElement} port_list_container
- * @property {HTMLButtonElement} refresh_button
+ * @interface EventSourceEventMap
  */
 
 let refresh_abort_controller = new AbortController();
@@ -36,7 +34,9 @@ async function refresh_port_listing(elements) {
     let response;
 
     try {
-        response = await fetch(`${telemetry_server}/devices`, { signal: refresh_abort_controller.signal });
+        response = await fetch(`${telemetry_server}/devices`, {
+            signal: refresh_abort_controller.signal,
+        });
     } catch (e) {
         if (e instanceof DOMException && e.code === DOMException.ABORT_ERR) {
             // Return early without modifying dom if aborted
@@ -45,7 +45,7 @@ async function refresh_port_listing(elements) {
     }
 
     if (response !== undefined && response.ok) {
-        /** @type {PortListing} */
+        /** @type {import("../types/generated/serial.js").PortListing} */
         let listing = await response.json();
 
         clearTimeout(loading_display);
@@ -67,8 +67,11 @@ async function refresh_port_listing(elements) {
                 port_container.style.listStyleType = "disclosure-closed"; // TODO: Disable all buttons
                 refresh_button.textContent = "Disconnect";
 
-                let buttons = /** @type {HTMLButtonElement[] | undefined} */
-                    (port_button.parentElement?.parentElement?.querySelectorAll("li > button"));
+                let buttons =
+                    /** @type {HTMLButtonElement[] | undefined} */
+                    (port_button.parentElement?.parentElement?.querySelectorAll(
+                        "li > button"
+                    ));
 
                 if (buttons !== undefined) {
                     for (let button of buttons) {
@@ -110,12 +113,16 @@ async function refresh_port_listing(elements) {
 let event_source;
 
 /**
- * @param {string} port 
+ * @param {string} port
  * @param {PortControlElements} elements
  */
 function subscribe_to_events(port, elements) {
     try {
-        event_source = new EventSource(`${telemetry_server}/devices/connect?port=${encodeURIComponent(port)}`);
+        event_source = new EventSource(
+            `${telemetry_server}/devices/connect?port=${encodeURIComponent(
+                port
+            )}`
+        );
     } catch (e) {
         alert("TODO: Failure");
     }
@@ -124,7 +131,12 @@ function subscribe_to_events(port, elements) {
         const sse = event_source;
 
         sse.addEventListener("open", () => console.log("POG"));
-        sse.addEventListener("test", (event) => console.log("recv", event.data));
+        sse.addEventListener("test", (event) => {
+            /** @type {import("../types/generated/ingest.js").TelemetryPacket}  */
+            const packet = JSON.parse(event.data);
+
+            console.log("recv", String.fromCharCode(...packet));
+        });
 
         sse.addEventListener("error", () => {
             sse.close();
@@ -143,7 +155,11 @@ window.onload = async () => {
     container.appendChild(port_list_container);
 
     const refresh_button = document.createElement("button");
-    refresh_button.addEventListener("click", async () => await refresh_port_listing({ port_list_container, refresh_button }));
+    refresh_button.addEventListener(
+        "click",
+        async () =>
+            await refresh_port_listing({ port_list_container, refresh_button })
+    );
     refresh_button.innerText = "Refresh";
 
     container.appendChild(refresh_button);

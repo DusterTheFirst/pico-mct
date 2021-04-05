@@ -3,6 +3,7 @@
         "MCT's",
         "Picade",
         "Pimoroni",
+        "Scriptify",
         "dialoguer",
         "serialport",
         "simplelog"
@@ -14,4 +15,7 @@
         "target/**",
         "**/*.toml"
     ],
+    "search.exclude": {
+        "**/web/opennmct/**": true
+    },
 }

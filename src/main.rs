@@ -28,6 +28,7 @@ async fn main() -> color_eyre::Result<()> {
             LevelFilter::Info,
             ConfigBuilder::new()
                 .add_filter_ignore_str(module_path!())
+                .set_target_level(LevelFilter::Error)
                 .build(),
             TerminalMode::Mixed,
             ColorChoice::Auto,
