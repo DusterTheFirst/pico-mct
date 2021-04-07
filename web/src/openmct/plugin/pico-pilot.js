@@ -1,4 +1,4 @@
-import { namespace, telemetry_type } from "./constants.js";
+import { namespace, telemetry_type } from "../../constants.js";
 
 /** @returns {OpenMCTPlugin} */
 export function PicoPilotPlugin() {
@@ -38,6 +38,9 @@ const objectProvider = {
                 name: `Pico Pilot (${identifier.key})`,
                 type: telemetry_type,
                 location: `${namespace}:avionics`,
+                telemetry: {
+                    values: []
+                }
             };
         }
     },

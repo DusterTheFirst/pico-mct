@@ -23,10 +23,16 @@ pub async fn list_devices(_: Request<State>) -> tide::Result<Body> {
 #[derive(Deserialize)]
 struct DeviceConnectQuery {
     port: String,
+    timeout: Option<u64>,
+    baud: Option<u32>,
 }
 
 pub async fn device_connect(req: Request<State>, sender: Sender) -> tide::Result<()> {
-    let DeviceConnectQuery { port: port_name } = req.query()?;
+    let DeviceConnectQuery {
+        port: port_name,
+        timeout,
+        baud,
+    } = req.query()?;
 
     if port_name.is_empty() {
         return Err(tide::Error::new(
@@ -37,13 +43,12 @@ pub async fn device_connect(req: Request<State>, sender: Sender) -> tide::Result
 
     // FIXME: not 1s for timeout?
     // Assuming Pico SDK USB CDC so baud rate does not matter
-
-    match serialport::new(&port_name, 0)
-        .timeout(Duration::from_secs(1))
+    match serialport::new(&port_name, baud.unwrap_or(0))
+        .timeout(Duration::from_millis(timeout.unwrap_or(1000)))
         .open()
     {
         Ok(new_port) => {
-            info!("Connected to serial port {}", port_name);
+            info!("Connected to device {}", port_name);
 
             let (tx, rx) = unbounded_future();
 
@@ -59,7 +64,7 @@ pub async fn device_connect(req: Request<State>, sender: Sender) -> tide::Result
                 };
 
                 match sender
-                    .send("test", serde_json::to_string(&packet)?, None)
+                    .send("telemetry", serde_json::to_string(&packet)?, None)
                     .await
                 {
                     Ok(()) => {}
@@ -72,7 +77,11 @@ pub async fn device_connect(req: Request<State>, sender: Sender) -> tide::Result
 
             debug!("Disconnecting from device {}", port_name);
 
-            ingest_task.cancel().await;
+            if let Some(res) = ingest_task.cancel().await {
+                if let Err(err) = res {
+                    error!("Ingest task encountered an error: {}", err);
+                }
+            }
 
             info!("Disconnected from device {}", port_name);
 

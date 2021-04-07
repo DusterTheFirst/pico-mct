@@ -4,16 +4,18 @@
         "Picade",
         "Pimoroni",
         "Scriptify",
+        "ccitt",
+        "crczoo",
         "dialoguer",
+        "dismissable",
         "serialport",
         "simplelog"
     ],
     "javascript.preferences.importModuleSpecifierEnding": "js",
     "liveServer.settings.ignoreFiles": [
         ".vscode/**",
-        "**/*.rs",
         "target/**",
-        "**/*.toml"
+        "**/*.{toml,rs,hex,bin}"
     ],
     "search.exclude": {
         "**/web/opennmct/**": true

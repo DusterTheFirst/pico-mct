@@ -1,3 +1,3 @@
 declare interface EventSourceEventMap {
-    test: MessageEvent<string>;
+    telemetry: MessageEvent<string>;
 }

@@ -795,7 +795,7 @@ declare interface DomainObject {
      * load domain objects
      */
     composition?: Identifier[];
-    telemetry?: { value: ValueMetadata[] };
+    telemetry?: { values: ValueMetadata[] };
 }
 
 /**
@@ -810,7 +810,7 @@ declare interface DomainObject {
  * (via openmct.objects.destroy) when you're done with it.
  */
 declare class MutableDomainObject implements DomainObject {
-    public telemetry: { value: ValueMetadata[] };
+    public telemetry: { values: ValueMetadata[] };
     public location: string;
     public identifier: Identifier;
     public type: string;
@@ -944,7 +944,7 @@ declare class Type {
 
 //#region TelemetryAPI
 
-/** See [https://github.com/nasa/openmct/blob/master/API.md#telemetry-api] */
+/** See [https://github.com/nasa/openmct/blob/master/API.md#telemetry-metadata] */
 declare interface ValueMetadata {
     /** unique identifier for this field. */
     key: string;
@@ -1015,7 +1015,10 @@ declare interface LimitEvaluator {
      * @param property the property to check for limit violations
      * @returns metadata about the limit violation, or undefined if a value is within limits
      */
-    evaluate<T>(datum: T, property: TelemetryProperty): LimitViolation;
+    evaluate<T extends TelemetryDatum>(
+        datum: T,
+        property: TelemetryProperty
+    ): LimitViolation;
 }
 
 /** A violation of limits defined for a telemetry property. */
@@ -1090,7 +1093,11 @@ declare interface TelemetryRequest {
  * TelemetryProvider implementations should be
  * [registered]{@link module:openmct.TelemetryAPI#addProvider}.
  */
-declare interface TelemetryProvider<T> {
+declare interface TelemetryProvider<T extends TelemetryDatum> {
+    /**
+     * optional. Must be implemented to provide historical telemetry. Should return true if the
+     * provider supports historical requests for the given domain object.
+     */
     supportsRequest?(domainObject: DomainObject): boolean;
 
     /**
@@ -1109,6 +1116,16 @@ declare interface TelemetryProvider<T> {
     ): Promise<T[]>;
 
     /**
+     * optional. Must be implemented to provide realtime telemetry. Should return true if the
+     * provider supports subscriptions for the given domain object (and request options).
+     */
+    supportsSubscribe?(
+        domainObject: DomainObject,
+        callback: (newData: T) => void,
+        options: unknown
+    ): boolean;
+
+    /**
      * Subscribe to realtime telemetry for a specific domain object.
      * The callback will be called whenever data is received from a
      * realtime provider.
@@ -1119,22 +1136,15 @@ declare interface TelemetryProvider<T> {
      */
     subscribe?(
         domainObject: DomainObject,
-        callback: (newData: T) => void
+        callback: (newData: T) => void,
+        options: unknown
     ): () => void;
 
     /**
-     * Get a limit evaluator for this domain object.
-     * Limit Evaluators help you evaluate limit and alarm status of individual
-     * telemetry datums for display purposes without having to interact directly
-     * with the Limit API.
-     *
-     * This method is optional.
-     * If a provider does not implement this method, it is presumed
-     * that no limits are defined for this domain object's telemetry.
-     *
-     * @param domainObject the domain object for which to evaluate limits
+     * optional. Implement and return true for domain objects that you want to provide a limit
+     * evaluator for.
      */
-    limitEvaluator?(domainObject: DomainObject): LimitEvaluator;
+    supportsLimits?(domainObject: DomainObject): boolean;
 
     /**
      * Get a limit evaluator for this domain object.
@@ -1149,6 +1159,15 @@ declare interface TelemetryProvider<T> {
      * @param domainObject the domain object for which to evaluate limits
      */
     getLimitEvaluator?(domainObject: DomainObject): LimitEvaluator;
+
+    /** optional. Implement and return true for objects that you want to provide dynamic metadata for. */
+    supportsMetadata?(domainObject: DomainObject): boolean;
+
+    /**
+     * required if supportsMetadata is implemented. Must return a valid telemetry metadata definition
+     * that includes at least one valueMetadata definition.
+     */
+    getMetadata?(domainObject: DomainObject): ValueMetadata;
 }
 
 /**
@@ -1156,7 +1175,7 @@ declare interface TelemetryProvider<T> {
  * object.
  */
 declare class TelemetryAPI {
-    constructor(provider: TelemetryProvider<unknown>);
+    constructor(provider: TelemetryProvider<TelemetryDatum>);
 
     /**
      * Return Custom String Formatter
@@ -1184,7 +1203,9 @@ declare class TelemetryAPI {
      *
      * @param provider the new telemetry provider
      */
-    public addProvider<T>(provider: TelemetryProvider<T>): void;
+    public addProvider<T extends TelemetryDatum>(
+        provider: TelemetryProvider<T>
+    ): void;
 
     /**
      * Get telemetry metadata for a given domain object.  Returns a telemetry
@@ -1257,8 +1278,8 @@ declare class TelemetryMetadataManager {
 
 declare class TelemetryValueFormatter {
     constructor(valueMetadata: ValueMetadata, formatService: FormatService);
-    public parse(datum: object): number;
-    public format(datum: object): string;
+    public parse(datum: TelemetryDatum): number;
+    public format(datum: TelemetryDatum): string;
 }
 //#endregion
 
@@ -1288,14 +1309,42 @@ declare class IndicatorAPI {
      * myIndicator.iconClass("icon-info");
      * ```
      */
-    public add(indicator: SimpleIndicator): void;
+    public add(indicator: SimpleIndicator | { element: HTMLElement }): void;
 }
 
 declare class SimpleIndicator {
-    public text(text: string): string;
-    public description(description: string): string;
-    public iconClass(iconClass: string): string;
-    public statusClass(statusClass: string): string;
+    /**
+     * Gets or sets the text shown when the user hovers over the indicator. Accepts an optional
+     * string argument that, if provided, will be used to set the text. Hovering over the indicator
+     * will expand it to its full size, revealing this text alongside the icon. Returns the currently
+     * set text as a string.Gets or sets the text shown when the user hovers over the indicator.
+     * Accepts an optional string argument that, if provided, will be used to set the text. Hovering
+     * over the indicator will expand it to its full size, revealing this text alongside the icon.
+     * Returns the currently set text as a string.
+     */
+    public text(text?: string): string;
+    /**
+     * Gets or sets the indicator's description. Accepts an optional string argument that, if provided,
+     * will be used to set the text. The description allows for more detail to be provided in a
+     * tooltip when the user hovers over the indicator. Returns the currently set text as a string.
+     */
+    public description(description?: string): string;
+    /**
+     * Gets or sets the CSS class used to define the icon. Accepts an optional string parameter to be
+     * used to set the class applied to the indicator. Any of the built-in glyphs may be used here,
+     * or a custom CSS class can be provided. Returns the currently defined CSS class as a string.
+     * Gets or sets the CSS class used to define the icon. Accepts an optional string parameter to
+     * be used to set the class applied to the indicator. Any of the
+     * [built-in glyphs](https://nasa.github.io/openmct/style-guide/#/browse/styleguide:home/glyphs?view=styleguide.glyphs)
+     * may be used here, or a custom CSS class can be provided. Returns the currently defined CSS class as a string.
+     */
+    public iconClass(iconClass?: string): string;
+    /**
+     * Gets or sets the CSS class used to determine status. Accepts an __optional__ string parameter
+     * to be used to set a status class applied to the indicator. May be used to apply different
+     * colors to indicate status.
+     */
+    public statusClass(statusClass?: string): string;
 }
 //#endregion
 
@@ -1383,6 +1432,109 @@ declare class NotificationAPI {
 //#region Editor API
 declare class EditorAPI {
     public isEditing(): boolean;
+}
+//#endregion
+
+//#region Overlay API
+declare class Overlay {
+    dismiss(): void;
+}
+
+declare class Dialog extends Overlay {}
+declare class ProgressDialog extends Overlay {
+    updateProgress(
+        progressPercentage: number | "unknown",
+        progressText: string
+    ): void;
+}
+
+/**
+ * The OverlayAPI is responsible for pre-pending templates to
+ * the body of the document, which is useful for displaying templates
+ * which need to block the full screen.
+ */
+declare class OverlayAPI {
+    /**
+     * A description of option properties that can be passed into the overlay
+     */
+    overlay(options: OverlayOptions): Overlay;
+
+    /**
+     * Displays a blocking (modal) dialog. This dialog can be used for
+     * displaying messages that require the user's
+     * immediate attention.
+     *
+     * @returns with an object with a dismiss function that can be called from the calling code
+     * to dismiss/destroy the dialog
+     *
+     * A description of the model options that may be passed to the
+     * dialog method. Note that the DialogModel described
+     * here is shared with the Notifications framework.
+     * @see NotificationService
+     */
+    dialog(options: DialogOptions): Dialog;
+
+    /**
+     * Displays a blocking (modal) progress dialog. This dialog can be used for
+     * displaying messages that require the user's attention, and show progress
+     *
+     * @returns  with an object with a dismiss function that can be called from the calling code
+     * to dismiss/destroy the dialog and an updateProgress function that takes progressPercentage(Number 0-100)
+     * and progressText (string)
+     *
+     * A description of the model options that may be passed to the
+     * dialog method. Note that the DialogModel described
+     * here is shared with the Notifications framework.
+     * @see NotificationService
+     */
+    progressDialog(
+        options: ProgressDialogOptions
+    ): ProgressDialog;
+}
+
+declare interface OverlayButton {
+    label: string;
+    callback: () => void;
+}
+
+declare interface OverlayOptions {
+    /** DOMElement that is to be inserted/shown on the overlay */
+    element: HTMLElement;
+    /** preferred size of the overlay (large, small, fit) */
+    size: "large" | "small" | "fit";
+    /** optional button objects with label and callback properties */
+    buttons: OverlayButton[];
+    /** callback to be called when overlay is destroyed */
+    onDestroy: () => void;
+    /**
+     * allow user to dismiss overlay by using esc, and clicking away from overlay.
+     * Unless set to false, all overlays will be dismissible by default.
+     */
+    dismissable?: boolean; // sic
+}
+
+declare interface DialogOptions {
+    /** the title to use for the dialog */
+    title: string;
+    /** class to apply to icon that is shown on dialog */
+    iconClass: string;
+    /**  text that indicates a current message, */
+    message: string;
+    /**
+     * a list of buttons with title and callback properties that will
+     * be added to the dialog.
+     */
+    buttons: OverlayButton[];
+}
+
+declare interface ProgressDialogOptions {
+    /** the initial progress value (0-100) or {string} 'unknown' for anonymous progress */
+    progressPerc: number | "unknown";
+    /** the initial text to be shown under the progress bar */
+    progressText: string;
+    /** a list of buttons with title and callback properties that will
+     * be added to the dialog. */
+    buttons: OverlayButton[];
 }
 //#endregion
 //#endregion
@@ -1827,4 +1979,9 @@ declare module plugins {
     function LocalStorage(): OpenMCTPlugin;
     function MyItems(): OpenMCTPlugin;
     function Elasticsearch(): OpenMCTPlugin;
+}
+
+interface TelemetryDatum {
+    id: string;
+    [x: string]: any;
 }

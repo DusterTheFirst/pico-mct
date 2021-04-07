@@ -17,6 +17,7 @@ serialport = "4.0"
 simplelog = "0.10"
 tide = { version = "0.16", default-features = false, features = ["h1-server"] }
 ts-rs = { path = "../ts-rs/ts-rs" }
+crczoo = "0.1"
 
 [patch.crates-io]
 async-attributes = { path = "../async-attributes" } # https://github.com/async-rs/async-attributes/pull/24
