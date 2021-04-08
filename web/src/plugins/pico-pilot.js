@@ -1,4 +1,4 @@
-import { namespace, telemetry_type } from "../../constants.js";
+import { namespace, telemetry_type } from "../constants.js";
 
 /** @returns {OpenMCTPlugin} */
 export function PicoPilotPlugin() {

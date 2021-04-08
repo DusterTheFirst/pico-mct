@@ -1,4 +1,4 @@
-import { telemetry_type } from "../../constants.js";
+import { telemetry_type } from "../constants.js";
 
 /** @returns {OpenMCTPlugin} */
 function RealtimeTelemetryPlugin() {

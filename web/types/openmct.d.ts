@@ -1309,7 +1309,8 @@ declare class IndicatorAPI {
      * myIndicator.iconClass("icon-info");
      * ```
      */
-    public add(indicator: SimpleIndicator | { element: HTMLElement }): void;
+    public add(indicator: SimpleIndicator): void;
+    public add(indicator: { element: HTMLElement }): void;
 }
 
 declare class SimpleIndicator {
@@ -1487,9 +1488,7 @@ declare class OverlayAPI {
      * here is shared with the Notifications framework.
      * @see NotificationService
      */
-    progressDialog(
-        options: ProgressDialogOptions
-    ): ProgressDialog;
+    progressDialog(options: ProgressDialogOptions): ProgressDialog;
 }
 
 declare interface OverlayButton {

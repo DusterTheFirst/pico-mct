@@ -9,18 +9,23 @@ let refresh_abort_controller = new AbortController();
 /**
  * @param {PortControlElements} elements
  */
-export async function refresh_port_listing(elements) {
-    let { port_list_container, refresh_button } = elements;
-
-    refresh_button.innerText = "Refresh";
-
-    // Abort all previous requests
-    refresh_abort_controller.abort();
-
+export function disconnect(elements) {
     if (event_source !== undefined) {
         event_source.close();
         event_source = undefined;
+
+        event_source_closed(elements);
     }
+}
+
+/**
+ * @param {PortControlElements} elements
+ */
+export async function refresh_port_listing(elements) {
+    let { port_list_container } = elements;
+
+    // Abort all previous requests
+    refresh_abort_controller.abort();
 
     // Make a new abort controller for this request
     refresh_abort_controller = new AbortController();
@@ -60,15 +65,15 @@ export async function refresh_port_listing(elements) {
             const port_container = document.createElement("li");
 
             const port_button = document.createElement("button");
+            port_button.classList.add("c-button");
             port_button.textContent = port;
             port_button.addEventListener("click", () => {
-                port_container.style.listStyleType = "disclosure-closed"; // TODO: Disable all buttons
-                refresh_button.textContent = "Disconnect";
+                port_container.style.fontWeight = "bold";
 
                 let buttons =
                     /** @type {HTMLButtonElement[] | undefined} */
                     (port_button.parentElement?.parentElement?.querySelectorAll(
-                        "li > button"
+                        "li > button.c-button"
                     ));
 
                 if (buttons !== undefined) {
@@ -115,6 +120,7 @@ let event_source;
  * @param {PortControlElements} elements
  */
 export function subscribe_to_events(port, elements) {
+    let { disconnect_button, connect_button, indicator, dismiss } = elements;
     try {
         event_source = new EventSource(
             `${telemetry_server}/devices/connect?port=${encodeURIComponent(
@@ -128,7 +134,15 @@ export function subscribe_to_events(port, elements) {
     if (event_source !== undefined) {
         const sse = event_source;
 
-        // sse.addEventListener("open", () => console.log("POG"));
+        sse.addEventListener("open", () => {
+            disconnect_button.style.display = "";
+            connect_button.style.display = "none";
+
+            indicator.text(port);
+            indicator.statusClass("s-status-enabled");
+
+            dismiss();
+        });
         sse.addEventListener("telemetry", (event) => {
             /** @type {import("../../types/generated/ingest.js").TelemetryPacket}  */
             const packet = JSON.parse(event.data);
@@ -139,7 +153,18 @@ export function subscribe_to_events(port, elements) {
         sse.addEventListener("error", () => {
             sse.close();
 
-            refresh_port_listing(elements);
+            event_source_closed(elements);
         });
     }
+}
+
+/**
+ * @param {PortControlElements} _
+ */
+function event_source_closed({ disconnect_button, connect_button, indicator }) {
+    disconnect_button.style.display = "none";
+    connect_button.style.display = "";
+
+    indicator.text("Disconnected");
+    indicator.statusClass("s-status-disabled");
 }

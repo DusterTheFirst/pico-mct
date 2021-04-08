@@ -1,6 +1,9 @@
 declare interface PortControlElements {
     port_list_container: HTMLUListElement;
-    refresh_button: HTMLButtonElement;
+    indicator: SimpleIndicator;
+    disconnect_button: HTMLButtonElement;
+    connect_button: HTMLButtonElement;
+    dismiss(): void;
 }
 
 declare interface ParentNode {
