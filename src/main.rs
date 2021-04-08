@@ -48,7 +48,8 @@ async fn main() -> color_eyre::Result<()> {
     app.at("/history/:key");
     app.at("/measurements")
         .get(routes::measurements::all_measurements);
-    app.at("/measurements/:key");
+    app.at("/measurements/:key")
+        .get(routes::measurements::get_measurement);
 
     app.at("/devices").get(routes::devices::list_devices);
     app.at("/devices/connect")

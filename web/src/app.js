@@ -2,19 +2,6 @@ import { disconnect, refresh_port_listing } from "./ingest/connect.js";
 import { HistoricalTelemetryPlugin } from "./plugins/historical-telemetry.js";
 import { PicoPilotPlugin } from "./plugins/pico-pilot.js";
 
-/**
- * @param {string} selectors
- */
-HTMLElement.prototype.querySelectorAlways = function (selectors) {
-    let result = this.querySelector(selectors);
-
-    if (result === null) {
-        throw new ReferenceError(`Element \`${selectors}\` missing`);
-    }
-
-    return result;
-};
-
 window.onload = async () => {
     openmct.setAssetPath("./openmct/");
     openmct.install(openmct.plugins.LocalStorage());

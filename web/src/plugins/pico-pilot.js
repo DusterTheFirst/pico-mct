@@ -1,4 +1,4 @@
-import { namespace, telemetry_type } from "../constants.js";
+import { namespace, telemetry_server, telemetry_type } from "../constants.js";
 
 /** @returns {OpenMCTPlugin} */
 export function PicoPilotPlugin() {
@@ -33,15 +33,26 @@ const objectProvider = {
                 location: "ROOT",
             };
         } else {
-            return {
-                identifier,
-                name: `Pico Pilot (${identifier.key})`,
-                type: telemetry_type,
-                location: `${namespace}:avionics`,
-                telemetry: {
-                    values: []
+            let response = await fetch(`${telemetry_server}/measurements/${identifier.key}`);
+
+            if (!response.ok) {
+                return {
+                    identifier,
+                    name: "FAILED TO LOAD"
                 }
-            };
+            }
+
+            return await response.json();
+
+            // return {
+            //     identifier,
+            //     name: `Pico Pilot (${identifier.key})`,
+            //     type: telemetry_type,
+            //     location: `${namespace}:avionics`,
+            //     telemetry: {
+            //         values: []
+            //     }
+            // };
         }
     },
 };
@@ -54,16 +65,13 @@ const compositionProvider = {
             object.type === "folder"
         );
     },
-    load: async () => {
-        return [
-            {
-                namespace,
-                key: "test.1",
-            },
-            {
-                namespace,
-                key: "test.2",
-            },
-        ];
-    },
+    load: async (object) => {
+        let response = await fetch(`${telemetry_server}/measurements`);
+
+        if (!response.ok) {
+            return [] // Show error?
+        }
+
+        return await response.json();
+    }
 };

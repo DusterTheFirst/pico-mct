@@ -1281,6 +1281,11 @@ declare class TelemetryValueFormatter {
     public parse(datum: TelemetryDatum): number;
     public format(datum: TelemetryDatum): string;
 }
+
+interface TelemetryDatum {
+    id: string;
+    [x: string]: any;
+}
 //#endregion
 
 //#region IndicatorAPI
@@ -1978,9 +1983,4 @@ declare module plugins {
     function LocalStorage(): OpenMCTPlugin;
     function MyItems(): OpenMCTPlugin;
     function Elasticsearch(): OpenMCTPlugin;
-}
-
-interface TelemetryDatum {
-    id: string;
-    [x: string]: any;
 }

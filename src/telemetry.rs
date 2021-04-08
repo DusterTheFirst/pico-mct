@@ -1,9 +1,60 @@
+use const_format::concatcp;
 use serde::{Deserialize, Serialize};
 
+/// Uniquely identifies a domain object.
+#[derive(Debug, Serialize, Deserialize, Eq, PartialEq)]
+pub struct Identifier<'a> {
+    /// the namespace to/from which this domain object should be loaded/stored.
+    pub namespace: &'a str,
+    /// a unique identifier for the domain object within that namespace
+    pub key: &'a str,
+}
+
+impl<'a> Identifier<'a> {
+    pub const NAMESPACE: &'static str = "dusterthefirst.pico-pilot";
+
+    pub const fn from_key(key: &'a str) -> Identifier {
+        Identifier {
+            namespace: Self::NAMESPACE,
+            key,
+        }
+    }
+}
+
+/// A domain object is an entity of relevance to a user's workflow, that
+/// should appear as a distinct and meaningful object within the user
+/// interface. Examples of domain objects are folders, telemetry sensors,
+/// and so forth.
+///
+/// A few common properties are defined for domain objects. Beyond these,
+/// individual types of domain objects may add more as they see fit.
+#[derive(Debug, Serialize)]
+pub struct DomainObject<'a> {
+    /// a key/namespace pair which uniquely identifies this domain object
+    identifier: Identifier<'a>,
+    /// the type of domain object
+    #[serde(rename = "type")]
+    ty: &'a str,
+    /// the human-readable name for this domain object
+    name: &'a str,
+    /// the user name of the creator of this domain object
+    creator: Option<&'a str>,
+    location: &'a str,
+
+    /// the time, in milliseconds since the UNIX epoch, at which this domain
+    /// object was last modified
+    modified: Option<u64>,
+    /// if present, this will be used by the default composition provider to
+    /// load domain objects
+    composition: Option<&'a [Identifier<'a>]>,
+    #[serde(rename = "telemetry.values")]
+    telemetry_values: Option<&'a [ValueMetadata<'a>]>,
+}
+
 /// See [https://github.com/nasa/openmct/blob/master/API.md#telemetry-api]
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Debug)]
 #[serde(rename_all = "camelCase")]
-pub struct TelemetryValue<'s> {
+pub struct ValueMetadata<'s> {
     /// unique identifier for this field.
     key: &'s str,
     /// Hints allow views to intelligently select relevant attributes for display, and are required
@@ -30,7 +81,7 @@ pub struct TelemetryValue<'s> {
     /// the enumeration, and a `string` property that is the text value of the enumeration.
     /// ex: `{"value": 0, "string": "OFF"}`. If you use an enumerations array, `min` and `max` will be set
     /// automatically for you.
-    enumerations: Option<Vec<TelemetryEnumeration<'s>>>,
+    enumerations: Option<&'s [TelemetryEnumeration<'s>]>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -53,6 +104,38 @@ pub enum ValueHint {
     Image(u32),
 }
 
-pub fn get_telemetry_values() -> Vec<TelemetryValue<'static>> {
-    todo!();
+const TELEMETRY_TYPE: &'static str = concatcp!(Identifier::NAMESPACE, ".telemetry");
+
+const TELEMETRY_VALUES: &[DomainObject<'static>] = &[DomainObject {
+    telemetry_values: Some(&[ValueMetadata {
+        enumerations: None,
+        format: Some("float"),
+        key: "test",
+        name: Some("Test"),
+        units: Some("miles"),
+        source: None,
+        hints: ValueHint::Range(1),
+        max: None,
+        min: None,
+    }]),
+    composition: None,
+    creator: None,
+    identifier: Identifier::from_key("test"),
+    location: concatcp!(Identifier::NAMESPACE, ":avionics"),
+    modified: None,
+    ty: TELEMETRY_TYPE,
+    name: "Test",
+}];
+
+pub fn get_telemetry_composition() -> Vec<&'static Identifier<'static>> {
+    TELEMETRY_VALUES
+        .iter()
+        .map(|DomainObject { identifier, .. }| identifier)
+        .collect()
+}
+
+pub fn get_telemetry_metadata(identifier: Identifier) -> Option<&DomainObject<'static>> {
+    TELEMETRY_VALUES
+        .iter()
+        .find(|object| object.identifier == identifier)
 }
