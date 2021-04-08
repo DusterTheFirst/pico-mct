@@ -6,10 +6,29 @@ window.onload = async () => {
     openmct.setAssetPath("./openmct/");
     openmct.install(openmct.plugins.LocalStorage());
     openmct.install(openmct.plugins.MyItems());
+    openmct.install(openmct.plugins.Espresso());
+    openmct.install(openmct.plugins.Timeline());
+    openmct.install(openmct.plugins.URLTimeSettingsSynchronizer());
+
+    openmct.install(openmct.plugins.LocalTimeSystem());
     openmct.install(openmct.plugins.UTCTimeSystem());
     openmct.time.clock("local", { start: -15 * 60 * 1000, end: 0 });
-    openmct.time.timeSystem("utc");
-    openmct.install(openmct.plugins.Espresso());
+    openmct.time.timeSystem("local");
+
+    // const ONE_MINUTE = 60 * 1000;
+
+    // openmct.install(
+    //     openmct.plugins.Conductor({
+    //         menuOptions: [
+    //             // Configuration for the LocalClock in the Local time system
+    //             {
+    //                 clock: "local",
+    //                 timeSystem: "local",
+    //                 clockOffsets: { start: -15 * ONE_MINUTE, end: 0 },
+    //             },
+    //         ],
+    //     })
+    // );
 
     openmct.install(PicoPilotPlugin());
     openmct.install(HistoricalTelemetryPlugin());

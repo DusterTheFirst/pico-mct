@@ -19,6 +19,8 @@ tide = { version = "0.16", default-features = false, features = ["h1-server"] }
 ts-rs = { path = "../ts-rs/ts-rs" }
 crczoo = "0.1"
 const_format = "0.2.14"
+derive_builder = "0.10.0"
+lazy_static = "1.4.0"
 
 [patch.crates-io]
 async-attributes = { path = "../async-attributes" } # https://github.com/async-rs/async-attributes/pull/24

@@ -1,7 +1,9 @@
 use color_eyre::eyre::Context;
+use lazy_static::initialize;
 use simplelog::{
     ColorChoice, CombinedLogger, ConfigBuilder, LevelFilter, TermLogger, TerminalMode,
 };
+use telemetry::TELEMETRY_VALUES;
 use tide::{http::headers::HeaderValue, security::CorsMiddleware, sse};
 
 mod ingest;
@@ -14,6 +16,9 @@ type State = ();
 #[async_std::main]
 async fn main() -> color_eyre::Result<()> {
     color_eyre::install()?;
+
+    // FIXME: here to catch panics early
+    initialize(&TELEMETRY_VALUES);
 
     CombinedLogger::init(vec![
         TermLogger::new(
