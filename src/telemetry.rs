@@ -63,36 +63,44 @@ impl<'a> DomainObjectTelemetry<'a> {
 }
 
 /// See [https://github.com/nasa/openmct/blob/master/API.md#telemetry-api]
-#[derive(Serialize, Debug, Clone, Builder, Default)]
+#[derive(Serialize, Debug, Clone, Builder, Copy)]
 #[serde(rename_all = "camelCase")]
-#[builder(setter(strip_option), default)]
+#[builder(setter(strip_option))]
 pub struct ValueMetadata<'s> {
     /// unique identifier for this field.
     key: &'s str,
     /// Hints allow views to intelligently select relevant attributes for display, and are required
     /// for most views to function. See section on "Value Hints" below.
+    #[builder(default)]
     hints: ValueHint,
     /// a human readable label for this field. If omitted, defaults to `key`.
+    #[builder(default)]
     name: Option<&'s str>,
     /// identifies the property of a datum where this value is stored. If omitted, defaults to `key`.
+    #[builder(default)]
     source: Option<&'s str>,
     /// a specific format identifier, mapping to a formatter. If omitted, uses a default formatter.
     /// For enumerations, use `enum`. For timestamps, use `utc` if you are using utc dates, otherwise use
     /// a key mapping to your custom date format.
+    #[builder(default)]
     format: Option<&'s str>,
     /// the units of this value, e.g. `km`, `seconds`, `parsecs`
+    #[builder(default)]
     units: Option<&'s str>,
     /// the minimum possible value of this measurement. Will be used by plots, gauges, etc to
     /// automatically set a min value.
+    #[builder(default)]
     min: Option<f64>,
     /// the maximum possible value of this measurement. Will be used by plots, gauges, etc to
     /// automatically set a max value.
+    #[builder(default)]
     max: Option<f64>,
     /// for objects where `format` is `"enum"`, this array tracks all possible enumerations of the value.
     /// Each entry in this array is an object, with a `value` property that is the numerical value of
     /// the enumeration, and a `string` property that is the text value of the enumeration.
     /// ex: `{"value": 0, "string": "OFF"}`. If you use an enumerations array, `min` and `max` will be set
     /// automatically for you.
+    #[builder(default)]
     enumerations: Option<&'s [TelemetryEnumeration<'s>]>,
 }
 
@@ -124,73 +132,81 @@ impl Default for ValueHint {
 
 const TELEMETRY_TYPE: &'static str = concatcp!(Identifier::NAMESPACE, ".telemetry");
 
+// FIXME: less manual
 lazy_static::lazy_static! {
-    pub static ref TELEMETRY_VALUES: Vec<DomainObject<'static>> = vec![DomainObject {
-        telemetry: Some(DomainObjectTelemetry::new(vec![
-            ValueMetadataBuilder::default()
-                .format("float")
-                .key("tvc_x")
-                .name("TVC X Axis")
-                .units("degrees")
-                .build()
-                .unwrap(),
-            ValueMetadataBuilder::default()
-                .format("float")
-                .key("tvc_z")
-                .name("TVC Z Axis")
-                .units("degrees")
-                .build()
-                .unwrap(),
-            ValueMetadataBuilder::default()
-                .format("float")
-                .key("angle")
-                .name("TVC Angle [debug]")
-                .units("radians")
-                .build()
-                .unwrap(),
-            ValueMetadataBuilder::default()
-                .format("float")
-                .key("temperature")
-                .name("Processor Temperature")
-                .units("celsius")
-                .build()
-                .unwrap(),
-            ValueMetadataBuilder::default()
-                .format("float")
-                .key("v_sys")
-                .name("System Bus")
-                .units("volt")
-                .build()
-                .unwrap(),
-            ValueMetadataBuilder::default()
-                .format("float")
-                .key("v_bat")
-                .name("Battery")
-                .units("volt")
-                .build()
-                .unwrap(),
-            ValueMetadataBuilder::default()
-                .key("offset")
-                .name("ADC Offset")
-                .build()
-                .unwrap(),
-            ValueMetadataBuilder::default()
-                .format("local-format")
-                .hints(ValueHint::Domain(1))
-                .key("local")
-                .source("running_us")
-                .name("Timestamp")
-                .build()
-                .unwrap(),
-        ])),
+    static ref TELEMETRY_TIME: ValueMetadata<'static> =  ValueMetadataBuilder::default()
+        .format("local-format")
+        .hints(ValueHint::Domain(1))
+        .key("local")
+        .source("running_us")
+        .name("Timestamp")
+        .build()
+        .unwrap();
+    pub static ref TELEMETRY_VALUES: Vec<DomainObject<'static>> = vec![
+        telemetry_domain_object(ValueMetadataBuilder::default()
+            .format("float")
+            .key("tvc_x")
+            .name("TVC X Axis")
+            .units("degrees")
+            .build()
+            .unwrap()),
+        telemetry_domain_object(ValueMetadataBuilder::default()
+            .format("float")
+            .key("tvc_z")
+            .name("TVC Z Axis")
+            .units("degrees")
+            .build()
+            .unwrap()),
+        telemetry_domain_object(ValueMetadataBuilder::default()
+            .format("float")
+            .key("angle")
+            .name("TVC Angle [debug]")
+            .units("radians")
+            .build()
+            .unwrap()),
+        telemetry_domain_object(ValueMetadataBuilder::default()
+            .format("float")
+            .key("temperature")
+            .name("Processor Temperature")
+            .units("celsius")
+            .build()
+            .unwrap()),
+        telemetry_domain_object(ValueMetadataBuilder::default()
+            .format("float")
+            .key("v_sys")
+            .name("System Bus")
+            .units("volt")
+            .build()
+            .unwrap()),
+        telemetry_domain_object(ValueMetadataBuilder::default()
+            .format("float")
+            .key("v_bat")
+            .name("Battery")
+            .units("volt")
+            .build()
+            .unwrap()),
+        telemetry_domain_object(ValueMetadataBuilder::default()
+            .key("offset")
+            .name("ADC Offset")
+            .build()
+            .unwrap())
+    ];
+}
+
+fn telemetry_domain_object<'a>(value_metadata: ValueMetadata<'a>) -> DomainObject<'a> {
+    DomainObject {
         composition: None,
         creator: None,
-        identifier: Identifier::from_key("test"),
+        identifier: Identifier::from_key(value_metadata.key),
         location: concatcp!(Identifier::NAMESPACE, ":avionics"),
         modified: None,
         ty: TELEMETRY_TYPE,
-        name: "Test",
-    }];
+        name: value_metadata.name.unwrap_or(value_metadata.key),
+        telemetry: Some(DomainObjectTelemetry::new(vec![
+            value_metadata,
+            *TELEMETRY_TIME,
+        ])),
+    }
 }
 
 pub fn get_telemetry_composition() -> Vec<&'static Identifier<'static>> {

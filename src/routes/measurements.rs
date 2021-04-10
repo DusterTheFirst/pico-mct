@@ -5,7 +5,7 @@ use crate::{
     State,
 };
 
-pub async fn all_measurements(req: Request<State>) -> Result<Body> {
+pub async fn all_measurements(_: Request<State>) -> Result<Body> {
     Body::from_json(&get_telemetry_composition())
 }
 

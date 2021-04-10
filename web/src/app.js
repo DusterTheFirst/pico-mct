@@ -1,3 +1,4 @@
+import { telemetry_server } from "./constants.js";
 import { disconnect, refresh_port_listing } from "./ingest/connect.js";
 import { HistoricalTelemetryPlugin } from "./plugins/historical-telemetry.js";
 import { PicoPilotPlugin } from "./plugins/pico-pilot.js";
@@ -8,7 +9,12 @@ window.onload = async () => {
     openmct.install(openmct.plugins.MyItems());
     openmct.install(openmct.plugins.Espresso());
     openmct.install(openmct.plugins.Timeline());
-    openmct.install(openmct.plugins.URLTimeSettingsSynchronizer());
+    openmct.install(
+        openmct.plugins.URLIndicator({
+            url: `${telemetry_server}/health`,
+            label: "Ingest Server",
+        })
+    );
 
     openmct.install(openmct.plugins.LocalTimeSystem());
     openmct.install(openmct.plugins.UTCTimeSystem());

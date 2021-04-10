@@ -60,6 +60,8 @@ async fn main() -> color_eyre::Result<()> {
     app.at("/devices/connect")
         .get(sse::endpoint(routes::devices::device_connect));
 
+    app.at("/health").get(|_| async move { Ok("ok") });
+
     app.at("/").all(routes::default);
     app.at("/*").all(routes::default);
 
