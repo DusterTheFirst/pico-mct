@@ -50,7 +50,8 @@ async fn main() -> color_eyre::Result<()> {
             .allow_credentials(false),
     );
 
-    app.at("/history/:key");
+    app.at("/history/:key")
+        .get(routes::history::get_datum);
     app.at("/measurements")
         .get(routes::measurements::all_measurements);
     app.at("/measurements/:key")

@@ -1,15 +1,57 @@
 import { telemetry_type } from "../constants.js";
+import { tick_clock } from "./running-us-time-system.js";
 
 /** @returns {OpenMCTPlugin} */
-function RealtimeTelemetryPlugin() {
+export function RealtimeTelemetryPlugin() {
     return (openmct) => {
         openmct.telemetry.addProvider({
             supportsSubscribe(domainObject) {
                 return domainObject.type == telemetry_type;
             },
             subscribe(domainObject, callback) {
-                return () => {};
+                let key = /** @type {keyof import("../../types/generated/ingest.js").TelemetryPacket} */ (domainObject
+                    .identifier.key);
+
+                let existing_subscribers = subscribers[key];
+
+                if (existing_subscribers === undefined) {
+                    existing_subscribers = new Set();
+                }
+
+                existing_subscribers.add(callback);
+
+                subscribers[key] = existing_subscribers;
+
+                return () => {
+                    subscribers[key]?.delete(callback);
+                };
             },
         });
     };
+}
+
+/** @type {import("../../types/frontend.js").RealtimeTelemetrySubscribers} */
+let subscribers = {};
+
+/**
+ * @param {import("../../types/generated/ingest.js").TelemetryPacket} packet
+ */
+export function push_telemetry(packet) {
+    tick_clock(packet.running_us);
+    
+    for (const x in packet) {
+        const key = /** @type {keyof import("../../types/generated/ingest.js").TelemetryPacket} */ (x);
+
+        let subscriptions = subscribers[key];
+
+        if (subscriptions !== undefined) {
+            subscriptions.forEach((fn) => {
+                fn({
+                    id: key,
+                    [key]: packet[key],
+                    running_us: packet.running_us,
+                });
+            });
+        }
+    }
 }

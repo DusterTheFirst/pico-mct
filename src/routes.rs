@@ -4,6 +4,7 @@ use crate::State;
 
 pub mod devices;
 pub mod measurements;
+pub mod history;
 
 pub async fn default(_: Request<State>) -> tide::Result<Response> {
     Ok(Response::builder(StatusCode::NotFound)

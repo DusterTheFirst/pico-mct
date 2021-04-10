@@ -1,15 +1,20 @@
 use std::{
+    collections::BTreeMap,
     io::{self, BufReader},
+    sync::Arc,
     time::{Duration, Instant},
 };
 
+use async_std::{sync::RwLock, task};
 use crossfire::mpsc::TxUnbounded;
-use log::{debug, trace, warn};
+use lazy_static::lazy_static;
+use log::{debug, error, info, trace, warn};
 use serde::{Deserialize, Serialize};
+use serde_cbor::error::Category;
 use serialport::SerialPort;
 use ts_rs::{export, TS};
 
-#[derive(Debug, Serialize, Deserialize, TS)]
+#[derive(Debug, Serialize, Deserialize, TS, Clone, Copy)]
 pub struct TelemetryPacket {
     running_us: u64,
     tvc_x: f64,
@@ -25,10 +30,18 @@ export! {
     TelemetryPacket => "./web/types/generated/ingest.d.ts"
 }
 
+lazy_static! {
+    pub static ref TIMESCALE_DATA: Arc<RwLock<BTreeMap<u64, TelemetryPacket>>> =
+        Arc::new(RwLock::new(BTreeMap::new()));
+}
+
 pub fn ingest(
     tx: TxUnbounded<TelemetryPacket>,
     serial_port: Box<dyn SerialPort>,
 ) -> io::Result<()> {
+    // TODO: ENSURE ONLY ONE INGEST TASK AT A TIME
+    task::block_on(TIMESCALE_DATA.write()).clear();
+
     let mut serial_port = BufReader::new(serial_port);
 
     let mut packets =
@@ -47,6 +60,9 @@ pub fn ingest(
                     debug!("Found first packet");
                     seeking = false;
                 }
+
+                // Store the data in a timescale "db"
+                task::block_on(TIMESCALE_DATA.write()).insert(packet.running_us, packet);
 
                 if tx.send(packet).is_err() {
                     debug!("Transmit channel closed, shutting down");
@@ -70,7 +86,31 @@ pub fn ingest(
                     continue;
                 }
 
-                warn!("Failed to parse packet. Skipping... : {}", e);
+                if e.is_scratch_too_small() {
+                    error!("Scratch buffer was too small to hold incoming packet, skipping this packet.");
+                    warn!("If this persists, the scratch buffer may need to be resized, or malformed packets may be being received");
+
+                    continue;
+                }
+
+                match e.classify() {
+                    Category::Io => {
+                        error!("Encountered I/O error, closing device");
+                        break;
+                    }
+                    Category::Syntax | Category::Data => {
+                        warn!(
+                            "Failed to parse packet at {}. Skipping... : {}",
+                            e.offset(),
+                            e
+                        );
+                    }
+                    Category::Eof => {
+                        info!("Reached EOF, closing device");
+
+                        break;
+                    }
+                }
             }
         }
     }

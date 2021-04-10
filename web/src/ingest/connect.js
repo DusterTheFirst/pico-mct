@@ -3,11 +3,12 @@
  */
 
 import { telemetry_server } from "../constants.js";
+import { push_telemetry } from "../plugins/realtime-telemetry.js";
 
 let refresh_abort_controller = new AbortController();
 
 /**
- * @param {PortControlElements} elements
+ * @param {import("../../types/frontend.js").PortControlElements} elements
  */
 export function disconnect(elements) {
     if (event_source !== undefined) {
@@ -19,7 +20,7 @@ export function disconnect(elements) {
 }
 
 /**
- * @param {PortControlElements} elements
+ * @param {import("../../types/frontend.js").PortControlElements} elements
  */
 export async function refresh_port_listing(elements) {
     let { port_list_container } = elements;
@@ -117,7 +118,7 @@ let event_source;
 
 /**
  * @param {string} port
- * @param {PortControlElements} elements
+ * @param {import("../../types/frontend.js").PortControlElements} elements
  */
 export function subscribe_to_events(port, elements) {
     let { disconnect_button, connect_button, indicator, dismiss } = elements;
@@ -147,7 +148,9 @@ export function subscribe_to_events(port, elements) {
             /** @type {import("../../types/generated/ingest.js").TelemetryPacket}  */
             const packet = JSON.parse(event.data);
 
-            console.log("recv", packet);
+            push_telemetry(packet);
+
+            // console.log("recv", packet);
         });
 
         sse.addEventListener("error", () => {
@@ -159,7 +162,7 @@ export function subscribe_to_events(port, elements) {
 }
 
 /**
- * @param {PortControlElements} _
+ * @param {import("../../types/frontend.js").PortControlElements} _
  */
 function event_source_closed({ disconnect_button, connect_button, indicator }) {
     disconnect_button.style.display = "none";

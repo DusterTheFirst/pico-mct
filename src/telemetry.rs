@@ -135,9 +135,8 @@ const TELEMETRY_TYPE: &'static str = concatcp!(Identifier::NAMESPACE, ".telemetr
 // FIXME: less manual
 lazy_static::lazy_static! {
     static ref TELEMETRY_TIME: ValueMetadata<'static> =  ValueMetadataBuilder::default()
-        .format("local-format")
         .hints(ValueHint::Domain(1))
-        .key("local")
+        .key("uc_running_us")
         .source("running_us")
         .name("Timestamp")
         .build()
@@ -148,6 +147,8 @@ lazy_static::lazy_static! {
             .key("tvc_x")
             .name("TVC X Axis")
             .units("degrees")
+            .min(-5.0)
+            .max(5.0)
             .build()
             .unwrap()),
         telemetry_domain_object(ValueMetadataBuilder::default()
@@ -155,6 +156,8 @@ lazy_static::lazy_static! {
             .key("tvc_z")
             .name("TVC Z Axis")
             .units("degrees")
+            .min(-5.0)
+            .max(5.0)
             .build()
             .unwrap()),
         telemetry_domain_object(ValueMetadataBuilder::default()
@@ -162,6 +165,8 @@ lazy_static::lazy_static! {
             .key("angle")
             .name("TVC Angle [debug]")
             .units("radians")
+            .min(0.0)
+            .max(std::f64::consts::PI * 2.0)
             .build()
             .unwrap()),
         telemetry_domain_object(ValueMetadataBuilder::default()
@@ -169,6 +174,8 @@ lazy_static::lazy_static! {
             .key("temperature")
             .name("Processor Temperature")
             .units("celsius")
+            .min(20.0)
+            .max(50.0)
             .build()
             .unwrap()),
         telemetry_domain_object(ValueMetadataBuilder::default()
@@ -176,6 +183,8 @@ lazy_static::lazy_static! {
             .key("v_sys")
             .name("System Bus")
             .units("volt")
+            .min(0.0)
+            .max(5.5)
             .build()
             .unwrap()),
         telemetry_domain_object(ValueMetadataBuilder::default()
@@ -183,11 +192,15 @@ lazy_static::lazy_static! {
             .key("v_bat")
             .name("Battery")
             .units("volt")
+            .min(0.0)
+            .max(20.0)
             .build()
             .unwrap()),
         telemetry_domain_object(ValueMetadataBuilder::default()
             .key("offset")
             .name("ADC Offset")
+            .min(0.0)
+            .max(100.0)
             .build()
             .unwrap())
     ];

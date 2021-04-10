@@ -1,3 +1,5 @@
+import { TelemetryPacket } from "./generated/ingest";
+
 declare interface PortControlElements {
     port_list_container: HTMLUListElement;
     indicator: SimpleIndicator;
@@ -5,3 +7,7 @@ declare interface PortControlElements {
     connect_button: HTMLButtonElement;
     dismiss(): void;
 }
+
+declare type RealtimeTelemetrySubscribers = {
+    [A in keyof TelemetryPacket]?: Set<(data: TelemetryDatum) => void>;
+};
