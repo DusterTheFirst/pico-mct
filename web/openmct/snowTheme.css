@@ -197,7 +197,7 @@ table {
   border-spacing: 0; }
 
 /*****************************************************************************
- * Open MCT, Copyright (c) 2014-2020, United States Government
+ * Open MCT, Copyright (c) 2014-2021, United States Government
  * as represented by the Administrator of the National Aeronautics and Space
  * Administration. All rights reserved.
  *
@@ -238,7 +238,7 @@ table {
 /************************** GLYPH CHAR UNICODES */
 /************************** GLYPHS AS DATA URI */
 /*****************************************************************************
- * Open MCT, Copyright (c) 2014-2020, United States Government
+ * Open MCT, Copyright (c) 2014-2021, United States Government
  * as represented by the Administrator of the National Aeronautics and Space
  * Administration. All rights reserved.
  *
@@ -266,7 +266,7 @@ table {
 /************************** MEDIA QUERIES: WINDOWS FOR SPECIFIC ORIENTATIONS FOR EACH DEVICE */
 /************************** DEVICE PARAMETERS FOR MENUS/REPRESENTATIONS */
 /*****************************************************************************
- * Open MCT, Copyright (c) 2014-2020, United States Government
+ * Open MCT, Copyright (c) 2014-2021, United States Government
  * as represented by the Administrator of the National Aeronautics and Space
  * Administration. All rights reserved.
  *
@@ -290,7 +290,7 @@ table {
 /************************************************** BROWSING */
 /************************************************** EDITING */
 /*****************************************************************************
- * Open MCT, Copyright (c) 2014-2020, United States Government
+ * Open MCT, Copyright (c) 2014-2021, United States Government
  * as represented by the Administrator of the National Aeronautics and Space
  * Administration. All rights reserved.
  *
@@ -390,7 +390,7 @@ table {
     transform: translate(-50%, -50%) rotate(360deg); } }
 
 /*****************************************************************************
- * Open MCT, Copyright (c) 2014-2020, United States Government
+ * Open MCT, Copyright (c) 2014-2021, United States Government
  * as represented by the Administrator of the National Aeronautics and Space
  * Administration. All rights reserved.
  *
@@ -488,7 +488,7 @@ table {
   font-size: 1.5em; }
 
 /*****************************************************************************
- * Open MCT, Copyright (c) 2014-2020, United States Government
+ * Open MCT, Copyright (c) 2014-2021, United States Government
  * as represented by the Administrator of the National Aeronautics and Space
  * Administration. All rights reserved.
  *
@@ -1428,7 +1428,7 @@ table {
   background-repeat: no-repeat; }
 
 /*****************************************************************************
- * Open MCT, Copyright (c) 2014-2020, United States Government
+ * Open MCT, Copyright (c) 2014-2021, United States Government
  * as represented by the Administrator of the National Aeronautics and Space
  * Administration. All rights reserved.
  *
@@ -1804,7 +1804,7 @@ body.desktop .has-local-controls:hover > * > * > [class*='local-controls--hidden
   cursor: default !important; }
 
 /*****************************************************************************
- * Open MCT, Copyright (c) 2014-2020, United States Government
+ * Open MCT, Copyright (c) 2014-2021, United States Government
  * as represented by the Administrator of the National Aeronautics and Space
  * Administration. All rights reserved.
  *
@@ -2003,7 +2003,7 @@ tr.is-limit--lwr td:first-child:before {
     content: "\E900"; }
 
 /*****************************************************************************
- * Open MCT, Copyright (c) 2014-2020, United States Government
+ * Open MCT, Copyright (c) 2014-2021, United States Government
  * as represented by the Administrator of the National Aeronautics and Space
  * Administration. All rights reserved.
  *
@@ -3244,7 +3244,7 @@ input[type="range"] {
   align-items: center; }
 
 /*****************************************************************************
- * Open MCT, Copyright (c) 2014-2020, United States Government
+ * Open MCT, Copyright (c) 2014-2021, United States Government
  * as represented by the Administrator of the National Aeronautics and Space
  * Administration. All rights reserved.
  *
@@ -3538,8 +3538,11 @@ body.desktop .form-row.validates > .label:after {
   height: 100%;
   line-height: 200%; }
 
+.req {
+  color: #0099cc; }
+
 /*****************************************************************************
- * Open MCT, Copyright (c) 2014-2020, United States Government
+ * Open MCT, Copyright (c) 2014-2021, United States Government
  * as represented by the Administrator of the National Aeronautics and Space
  * Administration. All rights reserved.
  *
@@ -3676,7 +3679,7 @@ div.c-table {
       color: white; }
 
 /*****************************************************************************
- * Open MCT, Copyright (c) 2014-2020, United States Government
+ * Open MCT, Copyright (c) 2014-2021, United States Government
  * as represented by the Administrator of the National Aeronautics and Space
  * Administration. All rights reserved.
  *
@@ -4649,7 +4652,7 @@ mct-container {
   content: ', '; }
 
 /*****************************************************************************
- * Open MCT, Copyright (c) 2014-2020, United States Government
+ * Open MCT, Copyright (c) 2014-2021, United States Government
  * as represented by the Administrator of the National Aeronautics and Space
  * Administration. All rights reserved.
  *
@@ -5256,7 +5259,7 @@ body.desktop .is-editing .gl-plot.child-frame:hover {
       padding: 3px; }
 
 /*****************************************************************************
- * Open MCT, Copyright (c) 2014-2020, United States Government
+ * Open MCT, Copyright (c) 2014-2021, United States Government
  * as represented by the Administrator of the National Aeronautics and Space
  * Administration. All rights reserved.
  *
@@ -5299,7 +5302,7 @@ body.desktop .is-editing .gl-plot.child-frame:hover {
   font-size: 12px !important; }
 
 /*****************************************************************************
- * Open MCT, Copyright (c) 2014-2020, United States Government
+ * Open MCT, Copyright (c) 2014-2021, United States Government
  * as represented by the Administrator of the National Aeronautics and Space
  * Administration. All rights reserved.
  *
@@ -5598,7 +5601,7 @@ body.desktop .l-overlay-fit .c-overlay__outer {
   min-width: 20%; }
 
 /*****************************************************************************
- * Open MCT, Copyright (c) 2014-2020, United States Government
+ * Open MCT, Copyright (c) 2014-2021, United States Government
  * as represented by the Administrator of the National Aeronautics and Space
  * Administration. All rights reserved.
  *
@@ -5820,7 +5823,7 @@ body.desktop .l-overlay-fit .c-overlay__outer {
   margin-left: 5px; }
 
 /*****************************************************************************
- * Open MCT, Copyright (c) 2014-2020, United States Government
+ * Open MCT, Copyright (c) 2014-2021, United States Government
  * as represented by the Administrator of the National Aeronautics and Space
  * Administration. All rights reserved.
  *
@@ -5880,7 +5883,7 @@ a.c-condition-widget {
   transform: translate(-50%, -50%); }
 
 /*****************************************************************************
- * Open MCT, Copyright (c) 2014-2020, United States Government
+ * Open MCT, Copyright (c) 2014-2021, United States Government
  * as represented by the Administrator of the National Aeronautics and Space
  * Administration. All rights reserved.
  *
@@ -8331,7 +8334,7 @@ body.phone .c-calendar {
 
 .c-create-menu {
   max-height: 80vh;
-  max-width: 500px;
+  width: 500px;
   min-height: 250px;
   z-index: 70; }
   .c-create-menu [class*="__icon"] {
@@ -8340,7 +8343,7 @@ body.phone .c-calendar {
     min-width: 200px; }
 
 /*****************************************************************************
- * Open MCT, Copyright (c) 2014-2020, United States Government
+ * Open MCT, Copyright (c) 2014-2021, United States Government
  * as represented by the Administrator of the National Aeronautics and Space
  * Administration. All rights reserved.
  *
@@ -9338,7 +9341,7 @@ body.phone.portrait .c-indicator.t-indicator-clock {
       opacity: 0.5; }
 
 /*****************************************************************************
- * Open MCT, Copyright (c) 2014-2020, United States Government
+ * Open MCT, Copyright (c) 2014-2021, United States Government
  * as represented by the Administrator of the National Aeronautics and Space
  * Administration. All rights reserved.
  *
@@ -9459,7 +9462,8 @@ body.phone.portrait .c-indicator.t-indicator-clock {
   .c-notebook__search-results {
     display: flex;
     flex: 1 1 auto;
-    flex-direction: column; }
+    flex-direction: column;
+    overflow-y: auto; }
     .c-notebook__search-results > * + * {
       margin-top: 5px; }
     .c-notebook__search-results__header {
@@ -9515,8 +9519,13 @@ body.phone.portrait .c-indicator.t-indicator-clock {
     .c-ne__content > [class*="__"] + [class*="__"] {
       margin-top: 3px; }
   .c-ne__text {
-    min-height: 22px;
-    white-space: pre-wrap; }
+    min-height: 22px; }
+    .c-ne__text:not(.highlight) {
+      white-space: pre-wrap; }
+    .c-ne__text .search-highlight {
+      background: rgba(0, 153, 204, 0.4);
+      color: #fff;
+      font-weight: bold; }
   .c-ne__input {
     -moz-appearance: none;
     -webkit-appearance: none;
@@ -9563,6 +9572,10 @@ body.phone.portrait .c-indicator.t-indicator-clock {
     align-items: center;
     align-self: flex-start;
     padding: 5px; }
+    .c-ne__section-and-page .search-highlight {
+      background: rgba(0, 153, 204, 0.4);
+      color: #fff;
+      font-weight: bold; }
     .c-ne__section-and-page > * + * {
       margin-left: 5px; }
     .c-ne__section-and-page [class*='icon'] {
