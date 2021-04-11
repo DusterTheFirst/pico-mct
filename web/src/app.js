@@ -12,6 +12,8 @@ window.onload = async () => {
     openmct.install(openmct.plugins.SummaryWidget());
     openmct.install(openmct.plugins.Espresso());
     openmct.install(openmct.plugins.Timeline());
+    openmct.install(openmct.plugins.LADTable());
+    openmct.install(openmct.plugins.Generator());
     openmct.install(
         openmct.plugins.URLIndicator({
             url: `${telemetry_server}/health`,

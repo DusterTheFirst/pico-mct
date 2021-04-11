@@ -1,6 +1,7 @@
 use const_format::concatcp;
 use derive_builder::Builder;
 use serde::{Deserialize, Serialize};
+use ts_rs::{export, TS};
 
 /// Uniquely identifies a domain object.
 #[derive(Debug, Serialize, Deserialize, Eq, PartialEq)]
@@ -142,81 +143,80 @@ lazy_static::lazy_static! {
         .build()
         .unwrap();
     pub static ref TELEMETRY_VALUES: Vec<DomainObject<'static>> = vec![
-        telemetry_domain_object(ValueMetadataBuilder::default()
+        telemetry_domain_object("tvc.x", "TVC X Axis", ValueMetadataBuilder::default()
             .format("float")
-            .key("tvc_x")
-            .name("TVC X Axis")
             .units("degrees")
             .min(-5.0)
-            .max(5.0)
-            .build()
-            .unwrap()),
-        telemetry_domain_object(ValueMetadataBuilder::default()
+            .max(5.0)),
+        telemetry_domain_object("tvc.z", "TVC X Axis", ValueMetadataBuilder::default()
             .format("float")
-            .key("tvc_z")
-            .name("TVC Z Axis")
             .units("degrees")
             .min(-5.0)
-            .max(5.0)
-            .build()
-            .unwrap()),
-        telemetry_domain_object(ValueMetadataBuilder::default()
+            .max(5.0)),
+        telemetry_domain_object("tvc.angle", "TVC Angle [debug]", ValueMetadataBuilder::default()
             .format("float")
-            .key("angle")
-            .name("TVC Angle [debug]")
             .units("radians")
             .min(0.0)
-            .max(std::f64::consts::PI * 2.0)
-            .build()
-            .unwrap()),
-        telemetry_domain_object(ValueMetadataBuilder::default()
+            .max(std::f64::consts::PI * 2.0)),
+        telemetry_domain_object("proc.temp", "Processor Temperature", ValueMetadataBuilder::default()
             .format("float")
-            .key("temperature")
-            .name("Processor Temperature")
             .units("celsius")
             .min(20.0)
-            .max(50.0)
-            .build()
-            .unwrap()),
-        telemetry_domain_object(ValueMetadataBuilder::default()
+            .max(50.0)),
+        telemetry_domain_object("voltage.sys", "System Bus", ValueMetadataBuilder::default()
             .format("float")
-            .key("v_sys")
-            .name("System Bus")
             .units("volt")
             .min(0.0)
-            .max(5.5)
-            .build()
-            .unwrap()),
-        telemetry_domain_object(ValueMetadataBuilder::default()
+            .max(5.5)),
+        telemetry_domain_object("voltage.bat", "Battery", ValueMetadataBuilder::default()
             .format("float")
-            .key("v_bat")
-            .name("Battery")
             .units("volt")
             .min(0.0)
-            .max(20.0)
-            .build()
-            .unwrap()),
-        telemetry_domain_object(ValueMetadataBuilder::default()
-            .key("offset")
-            .name("ADC Offset")
+            .max(20.0)),
+        telemetry_domain_object("proc.adc_offset", "ADC Offset", ValueMetadataBuilder::default()
             .min(0.0)
-            .max(100.0)
-            .build()
-            .unwrap())
+            .max(100.0))
     ];
 }
 
-fn telemetry_domain_object<'a>(value_metadata: ValueMetadata<'a>) -> DomainObject<'a> {
+#[derive(Debug, Serialize, Deserialize, TS, Clone, Copy)]
+pub struct TelemetryPacket {
+    pub running_us: u64,
+    #[serde(rename(serialize = "tvc.x"))]
+    pub tvc_x: f64,
+    #[serde(rename(serialize = "tvc.z"))]
+    pub tvc_z: f64,
+    #[serde(rename(serialize = "tvc.angle"))]
+    pub angle: f64,
+    #[serde(rename(serialize = "proc.temp"))]
+    pub temperature: f64,
+    #[serde(rename(serialize = "voltage.sys"))]
+    pub v_sys: f64,
+    #[serde(rename(serialize = "voltage.bat"))]
+    pub v_bat: f64,
+    #[serde(rename(serialize = "proc.adc_offset"))]
+    pub offset: u16,
+}
+
+export! {
+    TelemetryPacket => "./web/types/generated/ingest.d.ts"
+}
+
+fn telemetry_domain_object<'a>(
+    key: &'a str,
+    name: &'a str,
+    value_metadata: &mut ValueMetadataBuilder<'a>,
+) -> DomainObject<'a> {
     DomainObject {
         composition: None,
         creator: None,
-        identifier: Identifier::from_key(value_metadata.key),
+        identifier: Identifier::from_key(key),
         location: concatcp!(Identifier::NAMESPACE, ":avionics"),
         modified: None,
         ty: TELEMETRY_TYPE,
-        name: value_metadata.name.unwrap_or(value_metadata.key),
+        name,
         telemetry: Some(DomainObjectTelemetry::new(vec![
-            value_metadata,
+            value_metadata.key("value").name("Value").build().unwrap(),
             *TELEMETRY_TIME,
         ])),
     }

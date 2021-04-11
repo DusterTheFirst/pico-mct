@@ -25,7 +25,7 @@ pub async fn get_datum(req: Request<State>) -> Result<Body> {
 
         json!({
             "id": key,
-            key: unfiltered_datum[key],
+            "value": unfiltered_datum[key],
             "running_us": running_us,
         })
     }).collect::<Vec<_>>();

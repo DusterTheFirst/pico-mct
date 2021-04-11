@@ -9,26 +9,10 @@ use async_std::{sync::RwLock, task};
 use crossfire::mpsc::TxUnbounded;
 use lazy_static::lazy_static;
 use log::{debug, error, info, trace, warn};
-use serde::{Deserialize, Serialize};
 use serde_cbor::error::Category;
 use serialport::SerialPort;
-use ts_rs::{export, TS};
 
-#[derive(Debug, Serialize, Deserialize, TS, Clone, Copy)]
-pub struct TelemetryPacket {
-    running_us: u64,
-    tvc_x: f64,
-    tvc_z: f64,
-    angle: f64,
-    temperature: f64,
-    v_sys: f64,
-    v_bat: f64,
-    offset: u16,
-}
-
-export! {
-    TelemetryPacket => "./web/types/generated/ingest.d.ts"
-}
+use crate::telemetry::TelemetryPacket;
 
 lazy_static! {
     pub static ref TIMESCALE_DATA: Arc<RwLock<BTreeMap<u64, TelemetryPacket>>> =

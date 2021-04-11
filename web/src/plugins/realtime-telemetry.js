@@ -48,7 +48,7 @@ export function push_telemetry(packet) {
             subscriptions.forEach((fn) => {
                 fn({
                     id: key,
-                    [key]: packet[key],
+                    value: packet[key],
                     running_us: packet.running_us,
                 });
             });
