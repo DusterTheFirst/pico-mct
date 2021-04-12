@@ -176,7 +176,9 @@ lazy_static::lazy_static! {
         telemetry_domain_object("proc.adc_offset", "ADC Offset", ValueMetadataBuilder::default()
             .format("integer")
             .min(0.0)
-            .max(100.0))
+            .max(100.0)),
+        telemetry_domain_object("usb.present", "USB Present", ValueMetadataBuilder::default()
+            .format("boolean"))
     ];
 }
 
@@ -197,6 +199,8 @@ pub struct TelemetryPacket {
     pub v_bat: f64,
     #[serde(rename(serialize = "proc.adc_offset"))]
     pub offset: u16,
+    #[serde(rename(serialize = "usb.present"))]
+    pub v_bus_present: bool,
 }
 
 export! {
