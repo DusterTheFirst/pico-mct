@@ -174,6 +174,7 @@ lazy_static::lazy_static! {
             .min(0.0)
             .max(20.0)),
         telemetry_domain_object("proc.adc_offset", "ADC Offset", ValueMetadataBuilder::default()
+            .format("integer")
             .min(0.0)
             .max(100.0))
     ];
