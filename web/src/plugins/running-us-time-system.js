@@ -38,8 +38,8 @@ export function RunningUSTimeSystem() {
             },
         });
         openmct.time.clock("uc_running_us", {
-            start: -1, //-15 * 60 * 1000 * 1000,
-            end: 0,
+            start: 1000 * 1000 * 1000, //-15 * 60 * 1000 * 1000,
+            end: 1000 * 1000 * 1001, // FIXME: WTF!
         });
 
         openmct.time.addTimeSystem({
@@ -47,7 +47,7 @@ export function RunningUSTimeSystem() {
             name: "Running Time (seconds)",
             timeFormat: "us_as_seconds",
         });
-        openmct.time.timeSystem("uc_running_us");
+        openmct.time.timeSystem("uc_running_us", { end: 0, start: 0 });
 
         openmct.telemetry.addFormat({
             key: "us_as_seconds",
@@ -58,7 +58,7 @@ export function RunningUSTimeSystem() {
                 return parseFloat(text) * (1000 * 1000);
             },
             validate(text) {
-                return isNaN(parseFloat(text));
+                return isNaN(parseFloat(text.substring(0, text.length - 1)));
             },
         });
     };

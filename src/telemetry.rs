@@ -140,6 +140,7 @@ lazy_static::lazy_static! {
         .key("uc_running_us")
         .source("running_us")
         .name("Timestamp")
+        .min(0.0)
         .build()
         .unwrap();
     pub static ref TELEMETRY_VALUES: Vec<DomainObject<'static>> = vec![

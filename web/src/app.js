@@ -32,12 +32,12 @@ window.onload = async () => {
     //         menuOptions: [
     //             // Configuration for the LocalClock in the Local time system
     //             {
-    //                 clock: "current_us",
-    //                 timeSystem: "current_us",
-    //                 clockOffsets: { start: -15 * ONE_MINUTE, end: 0 },
+    //                 clock: "uc_running_us",
+    //                 timeSystem: "uc_running_us",
+    //                 clockOffsets: { start: -15 , end: 0 },
     //             },
     //             {
-    //                 timeSystem: "current_us",
+    //                 timeSystem: "uc_running_us",
     //                 bounds: {
     //                     start: Date.now() - 30 * ONE_MINUTE,
     //                     end: Date.now(),
