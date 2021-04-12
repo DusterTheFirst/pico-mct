@@ -77,10 +77,8 @@ pub async fn device_connect(req: Request<State>, sender: Sender) -> tide::Result
 
             debug!("Disconnecting from device {}", port_name);
 
-            if let Some(res) = ingest_task.cancel().await {
-                if let Err(err) = res {
-                    error!("Ingest task encountered an error: {}", err);
-                }
+            if let Some(Err(err)) = ingest_task.cancel().await {
+                error!("Ingest task encountered an error: {}", err);
             }
 
             info!("Disconnected from device {}", port_name);

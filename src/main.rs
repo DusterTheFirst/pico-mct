@@ -50,8 +50,7 @@ async fn main() -> color_eyre::Result<()> {
             .allow_credentials(false),
     );
 
-    app.at("/history/:key")
-        .get(routes::history::get_datum);
+    app.at("/history/:key").get(routes::history::get_datum);
     app.at("/measurements")
         .get(routes::measurements::all_measurements);
     app.at("/measurements/:key")
@@ -65,8 +64,6 @@ async fn main() -> color_eyre::Result<()> {
 
     app.at("/").all(routes::default);
     app.at("/*").all(routes::default);
-
-    // thread::spawn(ingest_main);
 
     app.listen("0.0.0.0:13705")
         .await

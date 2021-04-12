@@ -131,7 +131,7 @@ impl Default for ValueHint {
     }
 }
 
-const TELEMETRY_TYPE: &'static str = concatcp!(Identifier::NAMESPACE, ".telemetry");
+const TELEMETRY_TYPE: &str = concatcp!(Identifier::NAMESPACE, ".telemetry");
 
 // FIXME: less manual
 lazy_static::lazy_static! {
