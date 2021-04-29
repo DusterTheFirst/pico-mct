@@ -24,4 +24,5 @@ lazy_static = "1.4"
 serde_cbor = "0.11"
 
 [patch.crates-io]
-async-attributes = { path = "../async-attributes" } # https://github.com/async-rs/async-attributes/pull/24
+# https://github.com/async-rs/async-attributes/pull/24
+async-attributes = { git = "https://github.com/DusterTheFirst/async-attributes", branch = "less-annoying" }

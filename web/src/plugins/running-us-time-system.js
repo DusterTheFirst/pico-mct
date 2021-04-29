@@ -38,8 +38,8 @@ export function RunningUSTimeSystem() {
             },
         });
         openmct.time.clock("uc_running_us", {
-            start: 1000 * 1000 * 1000, //-15 * 60 * 1000 * 1000,
-            end: 1000 * 1000 * 1001, // FIXME: WTF!
+            start: -60 * 1000 * 1000,
+            end: 0,
         });
 
         openmct.time.addTimeSystem({

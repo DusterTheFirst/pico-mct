@@ -149,7 +149,7 @@ lazy_static::lazy_static! {
             .units("degrees")
             .min(-5.0)
             .max(5.0)),
-        telemetry_domain_object("tvc.z", "TVC X Axis", ValueMetadataBuilder::default()
+        telemetry_domain_object("tvc.z", "TVC Z Axis", ValueMetadataBuilder::default()
             .format("float")
             .units("degrees")
             .min(-5.0)
