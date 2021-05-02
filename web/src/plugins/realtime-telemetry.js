@@ -9,7 +9,7 @@ export function RealtimeTelemetryPlugin() {
                 return domainObject.type == telemetry_type;
             },
             subscribe(domainObject, callback) {
-                let key = /** @type {keyof import("../../types/generated/ingest.js").TelemetryPacket} */ (domainObject
+                let key = /** @type {keyof TelemetryPacket} */ (domainObject
                     .identifier.key);
 
                 let existing_subscribers = subscribers[key];
@@ -30,17 +30,17 @@ export function RealtimeTelemetryPlugin() {
     };
 }
 
-/** @type {import("../../types/frontend.js").RealtimeTelemetrySubscribers} */
+/** @type {RealtimeTelemetrySubscribers} */
 let subscribers = {};
 
 /**
- * @param {import("../../types/generated/ingest.js").TelemetryPacket} packet
+ * @param {TelemetryPacket} packet
  */
 export function push_telemetry(packet) {
     tick_clock(packet.running_us);
-    
+
     for (const x in packet) {
-        const key = /** @type {keyof import("../../types/generated/ingest.js").TelemetryPacket} */ (x);
+        const key = /** @type {keyof TelemetryPacket} */ (x);
 
         let subscriptions = subscribers[key];
 

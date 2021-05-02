@@ -39,7 +39,7 @@ pub struct UsbSerialPort {
 }
 
 export! {
-    PicoProduct, PortListing => "./web/types/generated/serial.d.ts"
+    (declare) PicoProduct, PortListing => "./web/types/generated/serial.d.ts"
 }
 
 pub async fn get_serial_ports() -> serialport::Result<impl Iterator<Item = UsbSerialPort>> {

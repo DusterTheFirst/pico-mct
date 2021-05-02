@@ -205,7 +205,7 @@ pub struct TelemetryPacket {
 }
 
 export! {
-    TelemetryPacket => "./web/types/generated/ingest.d.ts"
+    (declare)  TelemetryPacket => "./web/types/generated/ingest.d.ts"
 }
 
 fn telemetry_domain_object<'a>(

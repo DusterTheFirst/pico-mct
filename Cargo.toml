@@ -26,3 +26,5 @@ serde_cbor = "0.11"
 [patch.crates-io]
 # https://github.com/async-rs/async-attributes/pull/24
 async-attributes = { git = "https://github.com/DusterTheFirst/async-attributes", branch = "less-annoying" }
+# https://github.com/Aleph-Alpha/ts-rs/issues/5
+ts-rs = { git = "https://github.com/Aleph-Alpha/ts-rs", branch = "support-declare" }

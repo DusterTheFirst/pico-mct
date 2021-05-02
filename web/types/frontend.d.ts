@@ -1,5 +1,3 @@
-import { TelemetryPacket } from "./generated/ingest";
-
 declare interface PortControlElements {
     port_list_container: HTMLUListElement;
     indicator: SimpleIndicator;
